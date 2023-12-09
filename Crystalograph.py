@@ -120,20 +120,21 @@ def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noi
             segment / 1.5) * np.random.random(1)
         noise_multiplier.append(rand[0] * noise)
 
+    if smooth_noise:
+        noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
+    else:
+        noise_multiplier = np.array(noise_multiplier)
+
     # Apply a linear scale to the begin & end segments
     if num_cap_segments_limit_noise > 0:
         cap_limit_per_step = 1 / num_cap_segments_limit_noise
         for limit_segment in range(num_cap_segments_limit_noise):
             noise_multiplier[limit_segment] *= limit_segment * cap_limit_per_step
-            noise_multiplier[-limit_segment+1] *= limit_segment * cap_limit_per_step
+
+            noise_multiplier[-(limit_segment + 1)] *= limit_segment * cap_limit_per_step
 
     for segment in range(num_segments):
         noise_multiplier[segment] += 1
-
-    if smooth_noise:
-        noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
-    else:
-        noise_multiplier = np.array(noise_multiplier)
 
     # Since want to offset the signal from the center, we need to rescale the 1d vector to 2d (so copy the column
     # to a second column)
@@ -205,15 +206,14 @@ def drawCircles(image, line_thickness = 2, override_color = None):
     return image
 
 
-def drawDoubleCircle(image, thickness = 6, radius = 150):
+def drawDoubleCircle(image, thickness = 6, radius = 150, start_angle = 185, end_angle = 265, num_segments = 50):
     # As the noise is based on the radius, we want to normalize it in this case
-    normalized_noise = 0.1 * (100/radius)
+    normalized_noise = 0.08 * (100/radius)
 
-    pts_top = generateCirclePolyLines(center, int(radius - thickness / 2), 185, 265, segments=50, noise=normalized_noise,
+    pts_top = generateCirclePolyLines(center, int(radius - thickness / 2), start_angle, end_angle, segments=num_segments, noise=normalized_noise,
                                   smooth_noise=True)
 
-
-    pts_bottom = generateCirclePolyLines(center, int(radius + thickness / 2), 185, 265, segments=50, noise=normalized_noise,
+    pts_bottom = generateCirclePolyLines(center, int(radius + thickness / 2), start_angle, end_angle, segments=num_segments, noise=normalized_noise,
                                   smooth_noise=True)
 
     # Find the average of the two generated lines
@@ -237,7 +237,9 @@ def drawDoubleCircle(image, thickness = 6, radius = 150):
 def draw(image, line_thickness = 2, override_color = None):
     image = drawLines(image, line_thickness, override_color = override_color)
     image = drawCircles(image, line_thickness=line_thickness, override_color=override_color)
-
+    image = drawDoubleCircle(image, thickness=1, radius=150, start_angle=185, end_angle=209, num_segments=24)
+    image = drawDoubleCircle(image, thickness=3, radius=150, start_angle=213, end_angle=237, num_segments=24)
+    image = drawDoubleCircle(image, thickness=6, radius=150, start_angle=241, end_angle=265, num_segments=24)
     return image
 
 def drawVisualTest(image):
@@ -261,11 +263,11 @@ center = (int(width/2), int(height/2))
 #
 drawVisualTest(img)
 
-img = drawDoubleCircle(img, thickness = 1, radius = 100)
+#img = drawDoubleCircle(img, thickness = 1, radius = 100)
 
-img = drawDoubleCircle(img, thickness = 6, radius = 150)
 
-img = drawDoubleCircle(img, thickness = 20, radius = 200)
+#img = drawDoubleCircle(img, thickness = 10, radius = 200)
+
 
 
 img = drawTargetLines(img)
