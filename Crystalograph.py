@@ -91,8 +91,7 @@ def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, en
         pts.append(circle)
 
     pts = np.array(pts, np.int32)
-
-    noise_multiplier = generateNoiseMultiplierForCircle(segments, noise, smooth_noise)
+    noise_multiplier = generateNoiseMultiplierForCircle(segments, noise, smooth_noise, int(segments / 8))
     pts = numpy.multiply(pts, noise_multiplier)
 
     # Now ensure that the centre of our curve is set correctly!
@@ -104,13 +103,30 @@ def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, en
     return pts
 
 
-def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noise: bool) -> np.array:
+def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noise: bool, num_cap_segments_limit_noise: int = 0) -> np.array:
+    """
+
+    :param num_segments:
+    :param noise:
+    :param smooth_noise:
+    :param num_cap_segments_limit_noise: On how many of the segments on the begin/end should the noise be limited
+    :return:
+    """
     noise_multiplier = []
     for segment in range(num_segments):
         # Calculate the noise
         rand = np.sin(segment / 0.7) * np.random.random(1) + np.sin(segment / 1.1) * np.random.random(1) + np.sin(
             segment / 1.5) * np.random.random(1)
-        noise_multiplier.append(1 + rand[0] * noise)
+        noise_multiplier.append(rand[0] * noise)
+
+    # Apply a linear scale to the begin & end segments
+    cap_limit_per_step = 1 / num_cap_segments_limit_noise
+    for limit_segment in range(num_cap_segments_limit_noise):
+        noise_multiplier[limit_segment] *= limit_segment * cap_limit_per_step
+        noise_multiplier[-limit_segment+1] *= limit_segment * cap_limit_per_step
+
+    for segment in range(num_segments):
+        noise_multiplier[segment] += 1
 
     if smooth_noise:
         noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
@@ -202,7 +218,7 @@ img = createEmptyImage((1025, 768))
 height, width = img.shape[:2]
 center = (int(width/2), int(height/2))
 
-#drawVisualTest(img)
+drawVisualTest(img)
 
 
 img = drawTargetLines(img)
