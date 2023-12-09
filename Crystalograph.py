@@ -83,27 +83,15 @@ def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, en
     spacing_between_angle = total_angle / (segments - 1)
     pts = []
 
-    noise_multiplier = []
     for segment in range(segments):
         # Calculate where the circle should be.
         circle = (-math.sin(segment * spacing_between_angle + begin_angle_rad) * radius, math.cos(segment * spacing_between_angle + begin_angle_rad) * radius)
-
-        # Calculate the noise
-        rand = np.sin(segment / 0.7) * np.random.random(1) + np.sin(segment/ 1.1) * np.random.random(1) + np.sin(segment / 1.5) * np.random.random(1)
-        noise_multiplier.append(1 + rand[0] * noise)
-
         pts.append(circle)
 
     pts = np.array(pts, np.int32)
 
-    if smooth_noise:
-        noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
-        # Since want to offset the signal from the center, we need to rescale the 1d vector to 2d (so copy the column
-        # to a second column)
-        noise_multiplier = np.repeat(noise_multiplier[:, np.newaxis], 2, 1)
-
-        # Then we actually apply the noise
-        pts = numpy.multiply(pts, noise_multiplier)
+    noise_multiplier = generateNoiseMultiplierForCircle(segments, noise, smooth_noise)
+    pts = numpy.multiply(pts, noise_multiplier)
 
     # Now ensure that the centre of our curve is set correctly!
     centers = [center] * segments
@@ -114,6 +102,26 @@ def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, en
     return pts
 
 
+def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noise: bool) -> np.array:
+    noise_multiplier = []
+    for segment in range(num_segments):
+        # Calculate the noise
+        rand = np.sin(segment / 0.7) * np.random.random(1) + np.sin(segment / 1.1) * np.random.random(1) + np.sin(
+            segment / 1.5) * np.random.random(1)
+        noise_multiplier.append(1 + rand[0] * noise)
+
+    if smooth_noise:
+        noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
+    else:
+        noise_multiplier = np.array(noise_multiplier)
+
+    # Since want to offset the signal from the center, we need to rescale the 1d vector to 2d (so copy the column
+    # to a second column)
+    noise_multiplier = np.repeat(noise_multiplier[:, np.newaxis], 2, 1)
+
+    return noise_multiplier
+
+
 def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, segments: int = 10, noise: float = 0.1, smooth_noise: bool = True) -> Image:
     pts = generateCirclePolyLines(center, radius, begin_angle, end_angle, segments =segments, noise=noise, smooth_noise=smooth_noise)
 
@@ -122,6 +130,7 @@ def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: i
     # Actually draw them
     image = cv2.polylines(image, [pts], False, color, 2)
     return image
+
 
 
 img = createEmptyImage((1025, 768))
