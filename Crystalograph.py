@@ -153,7 +153,6 @@ def drawLines(image, line_thickness = 2, override_color = None):
     image = drawCircleWithPolyLines(image, override_color, center, 150, 60, 75,
                                     line_thickness=line_thickness)
 
-
     return image
 
 
@@ -216,18 +215,60 @@ def draw(image, line_thickness = 2, override_color = None):
     return image
 
 
+def applyFlickerToColors():
+    global RED, YELLOW, GREEN, BLUE
+    red_hsv = cv2.cvtColor(np.uint8([[RED]]), cv2.COLOR_RGB2HSV)
+
+    rand = np.random.random()
+    rand -= 0.4
+    rand *= 50
+
+    red_hsv[0][0][2] = min(max(red_hsv[0][0][2] + rand, 0), 255)
+    red_rgb = cv2.cvtColor(red_hsv, cv2.COLOR_HSV2RGB)
+    RED = (int(red_rgb[0][0][0] + 0.5), int(red_rgb[0][0][1] + 0.5), int(red_rgb[0][0][2]+0.5))
+
+    yellow_hsv = cv2.cvtColor(np.uint8([[YELLOW]]), cv2.COLOR_RGB2HSV)
+    rand = np.random.random()
+    rand -= 0.4
+    rand *= 50
+    yellow_hsv[0][0][2] = min(max(yellow_hsv[0][0][2] + rand, 0), 255)
+    yellow_rgb = cv2.cvtColor(yellow_hsv, cv2.COLOR_HSV2RGB)
+    YELLOW = (int(yellow_rgb[0][0][0] + 0.5), int(yellow_rgb[0][0][1] + 0.5), int(yellow_rgb[0][0][2] + 0.5))
+
+    green_hsv = cv2.cvtColor(np.uint8([[GREEN]]), cv2.COLOR_RGB2HSV)
+    rand = np.random.random()
+    rand -= 0.4
+    rand *= 50
+    green_hsv[0][0][2] = min(max(green_hsv[0][0][2] + rand, 0), 255)
+    green_rgb = cv2.cvtColor(green_hsv, cv2.COLOR_HSV2RGB)
+    GREEN = (int(green_rgb[0][0][0] + 0.5), int(green_rgb[0][0][1] + 0.5), int(green_rgb[0][0][2] + 0.5))
+
+    blue_hsv = cv2.cvtColor(np.uint8([[BLUE]]), cv2.COLOR_RGB2HSV)
+    rand = np.random.random()
+    rand -= 0.4
+    rand *= 50
+    blue_hsv[0][0][2] = min(max(blue_hsv[0][0][2] + rand, 0), 255)
+    blue_rgb = cv2.cvtColor(blue_hsv, cv2.COLOR_HSV2RGB)
+    BLUE = (int(blue_rgb[0][0][0] + 0.5), int(blue_rgb[0][0][1] + 0.5), int(blue_rgb[0][0][2] + 0.5))
+    pass
+
+
 def drawVisualTest(image):
+
+    # I know it's hella hacky. But suuuusssssh
+    applyFlickerToColors()
+
     draw(image, line_thickness=4)
     applyBlooming(image, gausian_ksize=25, blur_ksize=25)
     applyBlooming(image)
     draw(image)
     applyBlooming(image)
-    draw(image, override_color=WHITE, line_thickness=1)
-    applyBlooming(image)
+    #draw(image, override_color=WHITE, line_thickness=1)
+    #applyBlooming(image)
     draw(image, line_thickness=2)
     applyBlooming(image, gausian_ksize=3, blur_ksize=3)
-    draw(image, line_thickness=1, override_color=WHITE)
-    applyBlooming(image, gausian_ksize=3, blur_ksize=0)
+    #draw(image, line_thickness=1, override_color=WHITE)
+    #applyBlooming(image, gausian_ksize=3, blur_ksize=0)
     image = drawTargetLines(image)
     return image
 
