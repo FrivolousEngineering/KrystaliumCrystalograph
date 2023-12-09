@@ -17,6 +17,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
+GREEN= (0, 255, 0)
 
 
 def createEmptyImage(size: Tuple[int, int]) -> Image:
@@ -123,44 +124,86 @@ def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noi
     return noise_multiplier
 
 
-def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, segments: int = 10, noise: float = 0.1, smooth_noise: bool = True) -> Image:
+def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, line_thickness: int = 2, *, segments: int = 50, noise: float = 0.1, smooth_noise: bool = True, is_closed: bool = False) -> Image:
     pts = generateCirclePolyLines(center, radius, begin_angle, end_angle, segments =segments, noise=noise, smooth_noise=smooth_noise)
 
     pts = pts.reshape((-1, 1, 2))
 
     # Actually draw them
-    image = cv2.polylines(image, [pts], False, color, 2)
+    image = cv2.polylines(image, [pts], is_closed, color, line_thickness)
     return image
 
 
 def applyBlooming(image: np.ndarray, gausian_ksize: int = 9, blur_ksize: int = 5) -> np.ndarray:
     # Provide some blurring to image, to create some bloom.
-    cv2.GaussianBlur(image, (gausian_ksize, gausian_ksize), 0, dst=image)
-    cv2.blur(image, ksize=(blur_ksize, blur_ksize), dst=image)
+    if gausian_ksize > 0:
+        cv2.GaussianBlur(image, (gausian_ksize, gausian_ksize), 0, dst=image)
+    if blur_ksize > 0:
+        cv2.blur(image, ksize=(blur_ksize, blur_ksize), dst=image)
     return image
 
 
-def drawLines(image):
+def drawLines(image, line_thickness = 2, override_color = None):
     # Debug function for convenience
-    image = drawCircleWithPolyLines(image, BLUE, center, 100, 0, 90, segments=50)
-    image = drawCircleWithPolyLines(image, BLUE, center, radius=150, segments=15, begin_angle=30, end_angle=45)
-    image = drawCircleWithPolyLines(image, BLUE, center, 150, 60, 75, segments=10)
-    image = drawCircleWithPolyLines(image, RED, center, 100, 270, 360, segments=50)
+    if override_color:
+        image = drawCircleWithPolyLines(image, override_color, center, 100, 0, 90, segments=50, line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, override_color, center, radius=150, segments=15, begin_angle=30, end_angle=45,
+                                        line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, override_color, center, 150, 60, 75, segments=10, line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, override_color, center, 100, 270, 360, segments=50, line_thickness=line_thickness)
+    else:
+        image = drawCircleWithPolyLines(image, BLUE, center, 100, 0, 90, segments=50, line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, BLUE, center, radius=150, segments=15, begin_angle=30, end_angle=45, line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, BLUE, center, 150, 60, 75, segments=10, line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, RED, center, 100, 270, 360, segments=50, line_thickness=line_thickness)
     return image
+
+
+def drawCircles(image, line_thickness = 2, override_color = None):
+    if override_color:
+        cirlce_radius = 100
+        image = drawCircleWithPolyLines(image, override_color, tuple(numpy.add(center, (cirlce_radius, cirlce_radius))),
+                                        cirlce_radius, 0, 360, is_closed=True, segments=200, noise=0.05,
+                                        line_thickness=line_thickness)
+        cirlce_radius = 50
+        image = drawCircleWithPolyLines(image, override_color,
+                                        tuple(numpy.add(center, (cirlce_radius + 14, cirlce_radius + 14))),
+                                        cirlce_radius, 0, 360, is_closed=True, segments=200, noise=0.05,
+                                        line_thickness=line_thickness)
+    else:
+        cirlce_radius = 100
+        image = drawCircleWithPolyLines(image, GREEN, tuple(numpy.add(center, (cirlce_radius, cirlce_radius))), cirlce_radius, 0, 360, is_closed=True, segments=200, noise=0.05, line_thickness=line_thickness)
+        cirlce_radius = 50
+        image = drawCircleWithPolyLines(image, GREEN, tuple(numpy.add(center, (cirlce_radius+14, cirlce_radius+14))),
+                                        cirlce_radius, 0, 360, is_closed=True, segments=200, noise=0.05, line_thickness=line_thickness)
+    return image
+
+
+def draw(image, line_thickness = 2, override_color = None):
+    image = drawLines(image, line_thickness, override_color = override_color)
+    image = drawCircles(image, line_thickness=line_thickness, override_color=override_color)
+    return image
+
+def drawVisualTest(image):
+    draw(img, line_thickness=4)
+    applyBlooming(img, gausian_ksize=25, blur_ksize=25)
+    applyBlooming(img)
+    draw(img)
+    applyBlooming(img)
+    draw(img, override_color=WHITE, line_thickness=1)
+    applyBlooming(img)
+    draw(img, line_thickness=2)
+    applyBlooming(img, gausian_ksize=3, blur_ksize=3)
+    draw(img, line_thickness=1, override_color=WHITE)
+    applyBlooming(img, gausian_ksize=3, blur_ksize=0)
 
 img = createEmptyImage((1025, 768))
 
 height, width = img.shape[:2]
 center = (int(width/2), int(height/2))
 
-drawLines(img)
-applyBlooming(img, gausian_ksize=25, blur_ksize=25)
-applyBlooming(img)
-drawLines(img)
-applyBlooming(img)
-drawLines(img)
-applyBlooming(img)
-drawLines(img)
+#drawVisualTest(img)
+
 
 img = drawTargetLines(img)
 cv2.imshow('Test', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
