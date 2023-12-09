@@ -80,9 +80,9 @@ def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noi
     noise_multiplier = []
     for segment in range(num_segments):
         # Calculate the noise
-        rand = np.sin(segment / 0.7) * np.random.random(1) + np.sin(segment / 1.1) * np.random.random(1) + np.sin(
-            segment / 1.5) * np.random.random(1)
-        noise_multiplier.append(rand[0] * noise)
+        rand = np.sin(segment / 0.7) * np.random.random() + np.sin(segment / 1.1) * np.random.random() + np.sin(
+            segment / 1.5) * np.random.random()
+        noise_multiplier.append(rand * noise)
 
     if smooth_noise:
         noise_multiplier = savgol_filter(noise_multiplier, 5, 1)

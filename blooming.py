@@ -133,7 +133,7 @@ if __name__ == '__main__':
         text = glowing_text(image.copy(), text=message[:idx], org=(50, 70), color=Colors.YELLOW_ISH)
 
         # We use a random time delay between keystrokes, to simulate a human.
-        show(np.bitwise_or(border, text), delay=np.random.randint(1, 250))
+        show(np.bitwise_or(border, text), delay=50)
 
     # Pause the screen after the full message.
     show(np.bitwise_or(border, text), delay=0)
