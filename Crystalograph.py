@@ -5,7 +5,6 @@ import numpy as np
 import cv2
 import math
 from scipy.signal import savgol_filter
-import blooming
 import random
 # Typing helpers
 Image = np.ndarray
@@ -40,41 +39,6 @@ def drawTargetLines(image: Image) -> Image:
     image = cv2.line(image, (int(width / 2), 0), (int(width / 2), height), line_color, 1)
     image = cv2.line(image, (0, int(height / 2)), (width, int(height / 2)), line_color, 1)
     return image
-
-
-def drawHalfCircleNoRound(image):
-    height, width = image.shape[0:2]
-    # Ellipse parameters
-    radius = 100
-    center = (width / 2, height - 25)
-    axes = (radius, radius)
-    angle = 0
-    start_angle = 180
-    end_angle = 360
-    # When thickness == -1 -> Fill shape
-    thickness = -1
-
-    # Draw black half circle
-    cv2.ellipse(image, center, axes, angle, start_angle, end_angle, BLACK, thickness)
-
-    axes = (radius - 10, radius - 10)
-    # Draw a bit smaller white half circle
-    cv2.ellipse(image, center, axes, angle, start_angle, end_angle, WHITE, thickness)
-
-
-def drawHalfCircleRounded(image):
-    height, width = image.shape[0:2]
-    # Ellipse parameters
-    radius = 100
-    center = (width / 2, height - 25)
-    axes = (radius, radius)
-    angle = 0
-    start_angle = 180
-    end_angle = 360
-    thickness = 10
-
-    # http://docs.opencv.org/modules/core/doc/drawing_functions.html#ellipse
-    cv2.ellipse(image, center, axes, angle, start_angle, end_angle, BLACK, thickness)
 
 
 def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, segments: int = 10, noise: float = 0.1, smooth_noise: bool = True):
@@ -164,6 +128,8 @@ def applyBlooming(image: np.ndarray, gausian_ksize: int = 9, blur_ksize: int = 5
 
 # Debug function for convenience
 def drawLines(image, line_thickness = 2, override_color = None):
+    height, width = image.shape[:2]
+    center = (int(width / 2), int(height / 2))
 
     if override_color:
         image = drawCircleWithPolyLines(image, override_color, center, 100, 270, 360, segments=50, line_thickness=line_thickness)
@@ -186,6 +152,8 @@ def drawLines(image, line_thickness = 2, override_color = None):
 
 
 def drawCircles(image, line_thickness = 2, override_color = None):
+    height, width = image.shape[:2]
+    center = (int(width / 2), int(height / 2))
     small_cirlce_radius = 50
     large_circle_radius = 100
 
@@ -207,6 +175,8 @@ def drawCircles(image, line_thickness = 2, override_color = None):
 
 
 def drawDoubleCircle(image, thickness = 6, radius = 150, start_angle = 185, end_angle = 265, num_segments = 50):
+    height, width = image.shape[:2]
+    center = (int(width / 2), int(height / 2))
     # As the noise is based on the radius, we want to normalize it in this case
     normalized_noise = 0.08 * (100/radius)
 
@@ -238,39 +208,45 @@ def draw(image, line_thickness = 2, override_color = None):
     image = drawLines(image, line_thickness, override_color = override_color)
     image = drawCircles(image, line_thickness=line_thickness, override_color=override_color)
     image = drawDoubleCircle(image, thickness=1, radius=150, start_angle=185, end_angle=209, num_segments=24)
+
     image = drawDoubleCircle(image, thickness=3, radius=150, start_angle=213, end_angle=237, num_segments=24)
     image = drawDoubleCircle(image, thickness=6, radius=150, start_angle=241, end_angle=265, num_segments=24)
+
+    image = drawDoubleCircle(image, thickness=1, radius=130, start_angle=197, end_angle=221, num_segments=24)
     return image
 
 def drawVisualTest(image):
-    draw(img, line_thickness=4)
-    applyBlooming(img, gausian_ksize=25, blur_ksize=25)
-    applyBlooming(img)
-    draw(img)
-    applyBlooming(img)
-    draw(img, override_color=WHITE, line_thickness=1)
-    applyBlooming(img)
-    draw(img, line_thickness=2)
-    applyBlooming(img, gausian_ksize=3, blur_ksize=3)
-    draw(img, line_thickness=1, override_color=WHITE)
-    applyBlooming(img, gausian_ksize=3, blur_ksize=0)
-
-img = createEmptyImage((1025, 768))
-
-height, width = img.shape[:2]
-center = (int(width/2), int(height/2))
-
-#
-drawVisualTest(img)
-
-#img = drawDoubleCircle(img, thickness = 1, radius = 100)
+    draw(image, line_thickness=4)
+    applyBlooming(image, gausian_ksize=25, blur_ksize=25)
+    applyBlooming(image)
+    draw(image)
+    applyBlooming(image)
+    draw(image, override_color=WHITE, line_thickness=1)
+    applyBlooming(image)
+    draw(image, line_thickness=2)
+    applyBlooming(image, gausian_ksize=3, blur_ksize=3)
+    draw(image, line_thickness=1, override_color=WHITE)
+    applyBlooming(image, gausian_ksize=3, blur_ksize=0)
+    image = drawTargetLines(image)
+    return image
 
 
-#img = drawDoubleCircle(img, thickness = 10, radius = 200)
+if __name__ == '__main__':
+    img = createEmptyImage((1024, 768))
+    height, width = img.shape[:2]
+    center = (int(width/2), int(height/2))
+
+
+    drawVisualTest(img)
+
+    #img = drawDoubleCircle(img, thickness = 1, radius = 100)
+
+
+    #img = drawDoubleCircle(img, thickness = 10, radius = 200)
 
 
 
-img = drawTargetLines(img)
-cv2.imshow('Test', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
-cv2.waitKey()
+    #
+    cv2.imshow('Test', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+    cv2.waitKey()
 
