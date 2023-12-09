@@ -1,8 +1,11 @@
 from typing import Tuple
 
+import numpy
 import numpy as np
 import cv2
 import math
+from scipy.signal import savgol_filter
+import random
 # Typing helpers
 Image = np.ndarray
 
@@ -67,37 +70,46 @@ def drawHalfCircleRounded(image):
     # http://docs.opencv.org/modules/core/doc/drawing_functions.html#ellipse
     cv2.ellipse(image, center, axes, angle, start_angle, end_angle, BLACK, thickness)
 
-def drawCircleWithPolyLines(image, color, center, radius, segments, begin_angle = 0, end_angle = 90):
+def drawCircleWithPolyLines(image, color, center, radius, segments, begin_angle = 0, end_angle = 90, noise = 0.1):
     assert segments >= 2, "We must have at least 2 segments"
-    start_point = tuple(np.add(center, (0, -radius)))
-    end_point = tuple(np.add(center, (radius, 0)))
 
     begin_angle_rad = math.radians(begin_angle + 180)
     end_angle_rad = math.radians(end_angle + 180)
     total_angle = end_angle_rad - begin_angle_rad
 
-
     spacing_between_angle = total_angle / (segments - 1)
     pts = []
 
+    noise_multiplier = []
+
     for segment in range(segments):
-        extra = (-math.sin(segment * spacing_between_angle + begin_angle_rad) * radius, math.cos(segment * spacing_between_angle + begin_angle_rad) * radius)
-        new_point = tuple(np.add(center, extra))
+        # Calculate where the circle should be.
+        circle = (-math.sin(segment * spacing_between_angle + begin_angle_rad) * radius, math.cos(segment * spacing_between_angle + begin_angle_rad) * radius)
+
+        # Calculate the noise
+        rand = np.sin(segment / 0.7) * np.random.random(1) + np.sin(segment/ 1.1) * np.random.random(1) + np.sin(segment / 1.5) * np.random.random(1)
+        noise_scale = (1 + rand[0] * noise, 1 + rand[0] * noise)
+
+        circle = numpy.multiply(circle, noise_scale)
+
+        new_point = tuple(np.add(center, circle))
 
         pts.append(new_point)
 
     pts = np.array(pts, np.int32)
     pts = pts.reshape((-1, 1, 2))
+
     image = cv2.polylines(image, [pts], False, color, 2)
     return image
+
 
 
 img = createEmptyImage((1025, 768))
 img = drawTargetLines(img)
 height, width = img.shape[:2]
 center = (int(width/2), int(height/2))
-img = drawCircleWithPolyLines(img, BLUE, center, 100, 10, 0, 90)
-img = drawCircleWithPolyLines(img, RED, center, 100, 10, 270, 360)
+img = drawCircleWithPolyLines(img, BLUE, center, 100, 50, 0, 90)
+img = drawCircleWithPolyLines(img, RED, center, 100, 50, 270, 360)
 cv2.imshow('Test', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 cv2.waitKey()
 
