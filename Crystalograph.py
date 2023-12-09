@@ -21,17 +21,20 @@ class Crystalograph:
 
     def __init__(self):
         self._colors = {}
-        self._colors["WHITE"] = (255, 255, 255)
-        self._colors["BLACK"] = (0, 0, 0)
-        self._colors["RED"] = (255, 0, 0)
-        self._colors["BLUE"] = (0, 0, 255)
-        self._colors["GREEN"] = (0, 255, 0)
-        self._colors["YELLOW"] = (255, 255, 0)
+        self._colors["white"] = (255, 255, 255)
+        self._colors["black"] = (0, 0, 0)
+        self._colors["red"] = (255, 0, 0)
+        self._colors["blue"] = (0, 0, 255)
+        self._colors["green"] = (0, 255, 0)
+        self._colors["yellow"] = (255, 255, 0)
 
         self._image = None
         self._center = (0, 0)
         self._width = 0
         self._height = 0
+
+    def getColor(self, color_name: str) -> Color:
+        return self._colors.get(color_name.lower(), (255, 255, 255))
 
     def createEmptyImage(self, size: Tuple[int, int]) -> None:
         self._image = np.zeros((*size[::-1], 3), dtype=np.uint8)
@@ -49,7 +52,7 @@ class Crystalograph:
         width = self._width
         height = self._height
 
-        line_color = self._colors["WHITE"]
+        line_color = self.getColor("WHITE")
         cv2.line(self._image, (int(width / 2), 0), (int(width / 2), height), line_color, 1)
         cv2.line(self._image, (0, int(height / 2)), (width, int(height / 2)), line_color, 1)
 
@@ -145,10 +148,10 @@ class Crystalograph:
         if override_color:
             self.drawCircleWithPolyLines(override_color, self._center, 100, 270, 360, line_thickness=line_thickness)
         else:
-            self.drawCircleWithPolyLines(self._colors["RED"], self._center, 100, 270, 360, line_thickness=line_thickness)
+            self.drawCircleWithPolyLines(self.getColor("RED"), self._center, 100, 270, 360, line_thickness=line_thickness)
 
         if not override_color:
-            override_color = self._colors["BLUE"]
+            override_color = self.getColor("BLUE")
 
         self.drawCircleWithPolyLines(override_color, self._center, 100, 0, 90,
                                         line_thickness=line_thickness)
@@ -166,7 +169,7 @@ class Crystalograph:
         normalized_large_circle_radius = 0.05 * (100 / large_circle_radius)
 
         if not override_color:
-            override_color = self._colors["GREEN"]
+            override_color = self.getColor("GREEN")
 
         self.drawCircleWithPolyLines(override_color, tuple(numpy.add(self._center, (large_circle_radius, large_circle_radius))),
                                         large_circle_radius, 0, 360, is_closed=True, noise=normalized_large_circle_radius,
@@ -175,7 +178,6 @@ class Crystalograph:
                                         tuple(numpy.add(self._center, (small_cirlce_radius + 14, small_cirlce_radius + 14))),
                                         small_cirlce_radius, 0, 360, is_closed=True, noise=normalized_small_circle_radius,
                                         line_thickness=line_thickness)
-
 
     def drawDoubleCircle(self, thickness = 6, radius = 150, start_angle = 185, end_angle = 265):
         # As the noise is based on the radius, we want to normalize it in this case
@@ -187,15 +189,13 @@ class Crystalograph:
         pts_bottom = self.generateCirclePolyLines(self._center, int(radius + thickness / 2), start_angle, end_angle, noise=normalized_noise,
                                       smooth_noise=True)
 
-
         # Due to winding order, we need to flip the bottom points again
         pts_bottom = numpy.flipud(pts_bottom)
         pts = numpy.append(pts_top, pts_bottom)
 
         pts = pts.reshape((-1, 1, 2))
         # Actually draw them
-        cv2.fillPoly(self._image, [pts], self._colors["YELLOW"])
-
+        cv2.fillPoly(self._image, [pts], self.getColor("YELLOW"))
 
     def draw(self, line_thickness = 2, override_color = None):
         self.drawLines(line_thickness, override_color = override_color)
