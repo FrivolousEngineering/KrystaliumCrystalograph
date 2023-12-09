@@ -74,9 +74,8 @@ def drawHalfCircleRounded(image):
     cv2.ellipse(image, center, axes, angle, start_angle, end_angle, BLACK, thickness)
 
 
-def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, segments: int = 10, noise: float = 0.1, smooth_noise: bool = True) -> Image:
+def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, segments: int = 10, noise: float = 0.1, smooth_noise: bool = True):
     assert segments >= 2, "We must have at least 2 segments"
-
     begin_angle_rad = math.radians(begin_angle + 180)
     end_angle_rad = math.radians(end_angle + 180)
     total_angle = end_angle_rad - begin_angle_rad
@@ -85,7 +84,6 @@ def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: i
     pts = []
 
     noise_multiplier = []
-
     for segment in range(segments):
         # Calculate where the circle should be.
         circle = (-math.sin(segment * spacing_between_angle + begin_angle_rad) * radius, math.cos(segment * spacing_between_angle + begin_angle_rad) * radius)
@@ -113,6 +111,12 @@ def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: i
 
     # Force the results to be int, else we can't draw em
     pts = np.array(pts, np.int32)
+    return pts
+
+
+def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, segments: int = 10, noise: float = 0.1, smooth_noise: bool = True) -> Image:
+    pts = generateCirclePolyLines(center, radius, begin_angle, end_angle, segments =segments, noise=noise, smooth_noise=smooth_noise)
+
     pts = pts.reshape((-1, 1, 2))
 
     # Actually draw them
