@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import math
 from scipy.signal import savgol_filter
+import blooming
 import random
 # Typing helpers
 Image = np.ndarray
@@ -132,19 +133,35 @@ def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: i
     return image
 
 
+def applyBlooming(image: np.ndarray, gausian_ksize: int = 9, blur_ksize: int = 5) -> np.ndarray:
+    # Provide some blurring to image, to create some bloom.
+    cv2.GaussianBlur(image, (gausian_ksize, gausian_ksize), 0, dst=image)
+    cv2.blur(image, ksize=(blur_ksize, blur_ksize), dst=image)
+    return image
+
+
+def drawLines(image):
+    # Debug function for convenience
+    image = drawCircleWithPolyLines(image, BLUE, center, 100, 0, 90, segments=50)
+    image = drawCircleWithPolyLines(image, BLUE, center, radius=150, segments=15, begin_angle=30, end_angle=45)
+    image = drawCircleWithPolyLines(image, BLUE, center, 150, 60, 75, segments=10)
+    image = drawCircleWithPolyLines(image, RED, center, 100, 270, 360, segments=50)
+    return image
 
 img = createEmptyImage((1025, 768))
 
 height, width = img.shape[:2]
 center = (int(width/2), int(height/2))
-img = drawCircleWithPolyLines(img, BLUE, center, 100, 0, 90, segments = 50)
 
-img = drawCircleWithPolyLines(img, BLUE, center, radius= 150, segments = 15, begin_angle = 30, end_angle= 45)
+drawLines(img)
+applyBlooming(img, gausian_ksize=25, blur_ksize=25)
+applyBlooming(img)
+drawLines(img)
+applyBlooming(img)
+drawLines(img)
+applyBlooming(img)
+drawLines(img)
 
-img = drawCircleWithPolyLines(img, BLUE, center, 150, 60, 75, segments = 10)
-
-
-img = drawCircleWithPolyLines(img, RED, center, 100, 270, 360, segments = 50)
 img = drawTargetLines(img)
 cv2.imshow('Test', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 cv2.waitKey()
