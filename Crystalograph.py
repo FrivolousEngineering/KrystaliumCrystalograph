@@ -215,6 +215,7 @@ def draw(image, line_thickness = 2, override_color = None):
     image = drawDoubleCircle(image, thickness=1, radius=130, start_angle=197, end_angle=221, num_segments=24)
     return image
 
+
 def drawVisualTest(image):
     draw(image, line_thickness=4)
     applyBlooming(image, gausian_ksize=25, blur_ksize=25)
@@ -234,19 +235,9 @@ def drawVisualTest(image):
 if __name__ == '__main__':
     img = createEmptyImage((1024, 768))
     height, width = img.shape[:2]
-    center = (int(width/2), int(height/2))
-
+    center = (int(width / 2), int(height / 2))
 
     drawVisualTest(img)
-
-    #img = drawDoubleCircle(img, thickness = 1, radius = 100)
-
-
-    #img = drawDoubleCircle(img, thickness = 10, radius = 200)
-
-
-
-    #
     cv2.imshow('Test', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     cv2.waitKey()
 
