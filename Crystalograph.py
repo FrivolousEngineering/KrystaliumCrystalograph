@@ -1,10 +1,11 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
 
 import numpy
 import numpy as np
 import cv2
 import math
 from scipy.signal import savgol_filter
+from FlickeringColor import FlickeringColor
 
 # Typing helpers
 Image = np.ndarray
@@ -16,13 +17,13 @@ NUM_SEGMENTS_PER_LENGTH = 0.5
 
 class Crystalograph:
     def __init__(self) -> None:
-        self._colors = {}
-        self._colors["white"] = (255, 255, 255)
-        self._colors["black"] = (0, 0, 0)
-        self._colors["red"] = (255, 0, 0)
-        self._colors["blue"] = (0, 0, 255)
-        self._colors["green"] = (0, 255, 0)
-        self._colors["yellow"] = (255, 255, 0)
+        self._colors: Dict[str, FlickeringColor] = {}
+        self._colors["white"] = FlickeringColor(255, 255, 255)
+        self._colors["black"] = FlickeringColor(0, 0, 0)
+        self._colors["red"] = FlickeringColor(255, 0, 0)
+        self._colors["blue"] = FlickeringColor(0, 0, 255)
+        self._colors["green"] = FlickeringColor(0, 255, 0)
+        self._colors["yellow"] = FlickeringColor(255, 255, 0)
 
         self._image = None
         self._center = (0, 0)
@@ -30,7 +31,9 @@ class Crystalograph:
         self._height = 0
 
     def getColor(self, color_name: str) -> Color:
-        return self._colors.get(color_name.lower(), (255, 255, 255))
+        if color_name.lower() in self._colors:
+            return self._colors[color_name.lower()].getRGB()
+        return 255, 255, 255
 
     def createEmptyImage(self, size: Tuple[int, int]) -> None:
         self._image = np.zeros((*size[::-1], 3), dtype=np.uint8)
@@ -48,7 +51,7 @@ class Crystalograph:
         width = self._width
         height = self._height
 
-        line_color = self.getColor("WHITE")
+        line_color = self.getColor("normal_white")
         cv2.line(self._image, (int(width / 2), 0), (int(width / 2), height), line_color, 1)
         cv2.line(self._image, (0, int(height / 2)), (width, int(height / 2)), line_color, 1)
 
@@ -127,14 +130,19 @@ class Crystalograph:
 
     def drawCircleWithPolyLines(self, color: Color, center: Point, radius: int, begin_angle: int = 0,
                                 end_angle: int = 90, line_thickness: int = 2, *, noise: float = 0.1,
-                                smooth_noise: bool = True, is_closed: bool = False) -> Image:
+                                smooth_noise: bool = True, is_closed: bool = False, alpha: float = 1.0):
         pts = self.generateCirclePolyLines(center, radius, begin_angle, end_angle, noise=noise,
                                            smooth_noise=smooth_noise)
         pts = pts.reshape((-1, 1, 2))
 
-        # Actually draw them
-        image = cv2.polylines(self._image, [pts], is_closed, color, line_thickness)
-        return image
+        if alpha < 1.0:
+            overlay = self._image.copy()
+            cv2.polylines(overlay, [pts], is_closed, color, line_thickness)
+
+            self._image = cv2.addWeighted(overlay, alpha, self._image, 1-alpha, 0)
+        else:
+            # Actually draw them
+            cv2.polylines(self._image, [pts], is_closed, color, line_thickness)
 
     def applyBlooming(self, gausian_ksize: int = 9, blur_ksize: int = 5) -> None:
         # Provide some blurring to image, to create some bloom.
@@ -144,25 +152,25 @@ class Crystalograph:
             cv2.blur(self._image, ksize=(blur_ksize, blur_ksize), dst=self._image)
 
     # Debug function for convenience
-    def drawLines(self, line_thickness: int = 2, override_color: Optional[Color] = None):
+    def drawLines(self, line_thickness: int = 2, override_color: Optional[Color] = None, alpha = 1.0):
         if override_color:
-            self.drawCircleWithPolyLines(override_color, self._center, 100, 270, 360, line_thickness=line_thickness)
+            self.drawCircleWithPolyLines(override_color, self._center, 100, 270, 360, line_thickness=line_thickness, alpha = alpha)
         else:
             self.drawCircleWithPolyLines(self.getColor("RED"), self._center, 100, 270, 360,
-                                         line_thickness=line_thickness)
+                                         line_thickness=line_thickness, alpha = alpha)
 
         if not override_color:
             override_color = self.getColor("BLUE")
 
         self.drawCircleWithPolyLines(override_color, self._center, 100, 0, 90,
-                                     line_thickness=line_thickness)
+                                     line_thickness=line_thickness, alpha = alpha)
         self.drawCircleWithPolyLines(override_color, self._center, radius=150, begin_angle=30,
                                      end_angle=45,
-                                     line_thickness=line_thickness)
+                                     line_thickness=line_thickness, alpha = alpha)
         self.drawCircleWithPolyLines(override_color, self._center, 150, 60, 75,
-                                     line_thickness=line_thickness)
+                                     line_thickness=line_thickness, alpha = alpha)
 
-    def drawCircles(self, line_thickness: int = 2, override_color: Optional[Color] = None) -> None:
+    def drawCircles(self, line_thickness: int = 2, override_color: Optional[Color] = None, alpha = 1.) -> None:
         small_circle_radius = 50
         large_circle_radius = 100
 
@@ -170,17 +178,17 @@ class Crystalograph:
         normalized_large_circle_radius = 0.05 * (100 / large_circle_radius)
 
         if not override_color:
-            override_color = self.getColor("GREEN")
+            override_color = self.getColor("RED")
 
         self.drawCircleWithPolyLines(override_color,
                                      tuple(numpy.add(self._center, (large_circle_radius, large_circle_radius))),
                                      large_circle_radius, 0, 360, is_closed=True, noise=normalized_large_circle_radius,
-                                     line_thickness=line_thickness)
+                                     line_thickness=line_thickness, alpha = alpha)
         self.drawCircleWithPolyLines(override_color,
                                      tuple(
                                          numpy.add(self._center, (small_circle_radius + 14, small_circle_radius + 14))),
                                      small_circle_radius, 0, 360, is_closed=True, noise=normalized_small_circle_radius,
-                                     line_thickness=line_thickness)
+                                     line_thickness=line_thickness, alpha = alpha)
 
     def drawDoubleCircle(self, thickness: int = 6, radius: int = 150, start_angle: int = 185,
                          end_angle: int = 265) -> None:
@@ -203,15 +211,15 @@ class Crystalograph:
         # Actually draw them
         cv2.fillPoly(self._image, [pts], self.getColor("YELLOW"))
 
-    def draw(self, line_thickness: int = 2, override_color: Optional[Color] = None) -> None:
-        self.drawLines(line_thickness, override_color=override_color)
-        self.drawCircles(line_thickness=line_thickness, override_color=override_color)
-        self.drawDoubleCircle(thickness=1, radius=150, start_angle=185, end_angle=209)
+    def draw(self, line_thickness: int = 2, override_color: Optional[Color] = None, alpha = 1.0) -> None:
+        self.drawLines(line_thickness, override_color=override_color, alpha = alpha)
+        self.drawCircles(line_thickness=line_thickness, override_color=override_color, alpha = alpha)
+        #self.drawDoubleCircle(thickness=1, radius=150, start_angle=185, end_angle=209)
 
-        self.drawDoubleCircle(thickness=3, radius=150, start_angle=213, end_angle=237)
-        self.drawDoubleCircle(thickness=6, radius=150, start_angle=241, end_angle=265)
+        #self.drawDoubleCircle(thickness=3, radius=150, start_angle=213, end_angle=237)
+        #self.drawDoubleCircle(thickness=6, radius=150, start_angle=241, end_angle=265)
 
-        self.drawDoubleCircle(thickness=1, radius=130, start_angle=197, end_angle=221)
+        #self.drawDoubleCircle(thickness=1, radius=130, start_angle=197, end_angle=221)
 
     def drawVisualTest(self) -> Image:
         # I know it's hella hacky. But suuuusssssh
@@ -222,15 +230,20 @@ class Crystalograph:
         self.applyBlooming()
         self.draw()
         self.applyBlooming()
-        # draw(image, override_color=WHITE, line_thickness=1)
-        # applyBlooming(image)
+        self.draw(override_color=self.getColor("white"), line_thickness=1)
+        self.applyBlooming()
         self.draw(line_thickness=2)
         self.applyBlooming(gausian_ksize=3, blur_ksize=3)
-        # draw(image, line_thickness=1, override_color=WHITE)
-        # applyBlooming(image, gausian_ksize=3, blur_ksize=0)
+        self.draw(line_thickness=1, alpha=0.4)
+        self.draw(override_color=self.getColor("white"), line_thickness=1, alpha = 0.4)
+        self.draw(override_color=self.getColor("white"), line_thickness=1, alpha= 0.2)
+        self.applyBlooming(gausian_ksize=3, blur_ksize=0)
         self.drawTargetLines()
         return self._image
 
+    def update(self):
+        for flickering_color in self._colors.values():
+            flickering_color.update()
 
 '''def applyFlickerToColors():
     global RED, YELLOW, GREEN, BLUE

@@ -35,6 +35,7 @@ if __name__ == '__main__':
         screen.blit(img, (0, 0))
 
         pygame.display.flip()
+        crystalograph.update()
         clock.tick(np.random.randint(10, 30))
 
     pygame.quit()
