@@ -15,10 +15,10 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((1024, 768))
     clock = pygame.time.Clock()
     running = True
-
+    crystalograph = Crystalograph.Crystalograph()
     while running:
-        image = Crystalograph.createEmptyImage((1024, 768))
-        image = Crystalograph.drawVisualTest(image)
+        crystalograph.createEmptyImage((1024, 768))
+        image = crystalograph.drawVisualTest()
         screen.fill((0, 0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
