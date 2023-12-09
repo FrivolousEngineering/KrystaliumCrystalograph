@@ -19,6 +19,8 @@ BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 
+NUM_SEGMENTS_PER_LENGTH = 0.5
+
 
 def createEmptyImage(size: Tuple[int, int]) -> Image:
     return np.zeros((*size[::-1], 3), dtype=np.uint8)
@@ -41,26 +43,29 @@ def drawTargetLines(image: Image) -> Image:
     return image
 
 
-def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, segments: int = 10, noise: float = 0.1, smooth_noise: bool = True):
-    assert segments >= 2, "We must have at least 2 segments"
+def generateCirclePolyLines(center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *, noise: float = 0.1, smooth_noise: bool = True):
+    circle_length = (2 * math.pi * radius) * ((end_angle - begin_angle) / 360)
+    num_segments = int(circle_length * NUM_SEGMENTS_PER_LENGTH)
+
+
     begin_angle_rad = math.radians(begin_angle + 180)
     end_angle_rad = math.radians(end_angle + 180)
     total_angle = end_angle_rad - begin_angle_rad
 
-    spacing_between_angle = total_angle / (segments - 1)
+    spacing_between_angle = total_angle / (num_segments - 1)
     pts = []
 
-    for segment in range(segments):
+    for segment in range(num_segments):
         # Calculate where the circle should be.
         circle = (-math.sin(segment * spacing_between_angle + begin_angle_rad) * radius, math.cos(segment * spacing_between_angle + begin_angle_rad) * radius)
         pts.append(circle)
 
     pts = np.array(pts, np.int32)
-    noise_multiplier = generateNoiseMultiplierForCircle(segments, noise, smooth_noise, int(segments / 8))
+    noise_multiplier = generateNoiseMultiplierForCircle(num_segments, noise, smooth_noise, int(num_segments / 8))
     pts = numpy.multiply(pts, noise_multiplier)
 
     # Now ensure that the centre of our curve is set correctly!
-    centers = [center] * segments
+    centers = [center] * num_segments
     pts = numpy.add(centers, pts)
 
     # Force the results to be int, else we can't draw em
@@ -107,9 +112,8 @@ def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noi
     return noise_multiplier
 
 
-def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, line_thickness: int = 2, *, segments: int = 50, noise: float = 0.1, smooth_noise: bool = True, is_closed: bool = False) -> Image:
-    pts = generateCirclePolyLines(center, radius, begin_angle, end_angle, segments =segments, noise=noise, smooth_noise=smooth_noise)
-
+def drawCircleWithPolyLines(image: Image, color: Color, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, line_thickness: int = 2, *, noise: float = 0.1, smooth_noise: bool = True, is_closed: bool = False) -> Image:
+    pts = generateCirclePolyLines(center, radius, begin_angle, end_angle, noise=noise, smooth_noise=smooth_noise)
     pts = pts.reshape((-1, 1, 2))
 
     # Actually draw them
@@ -132,19 +136,19 @@ def drawLines(image, line_thickness = 2, override_color = None):
     center = (int(width / 2), int(height / 2))
 
     if override_color:
-        image = drawCircleWithPolyLines(image, override_color, center, 100, 270, 360, segments=50, line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, override_color, center, 100, 270, 360, line_thickness=line_thickness)
     else:
-        image = drawCircleWithPolyLines(image, RED, center, 100, 270, 360, segments=50, line_thickness=line_thickness)
+        image = drawCircleWithPolyLines(image, RED, center, 100, 270, 360, line_thickness=line_thickness)
 
     if not override_color:
         override_color = BLUE
 
-    image = drawCircleWithPolyLines(image, override_color, center, 100, 0, 90, segments=50,
+    image = drawCircleWithPolyLines(image, override_color, center, 100, 0, 90,
                                     line_thickness=line_thickness)
-    image = drawCircleWithPolyLines(image, override_color, center, radius=150, segments=15, begin_angle=30,
+    image = drawCircleWithPolyLines(image, override_color, center, radius=150, begin_angle=30,
                                     end_angle=45,
                                     line_thickness=line_thickness)
-    image = drawCircleWithPolyLines(image, override_color, center, 150, 60, 75, segments=10,
+    image = drawCircleWithPolyLines(image, override_color, center, 150, 60, 75,
                                     line_thickness=line_thickness)
 
 
@@ -164,32 +168,28 @@ def drawCircles(image, line_thickness = 2, override_color = None):
         override_color = GREEN
 
     image = drawCircleWithPolyLines(image, override_color, tuple(numpy.add(center, (large_circle_radius, large_circle_radius))),
-                                    large_circle_radius, 0, 360, is_closed=True, segments=200, noise=normalized_large_circle_radius,
+                                    large_circle_radius, 0, 360, is_closed=True, noise=normalized_large_circle_radius,
                                     line_thickness=line_thickness)
     image = drawCircleWithPolyLines(image, override_color,
                                     tuple(numpy.add(center, (small_cirlce_radius + 14, small_cirlce_radius + 14))),
-                                    small_cirlce_radius, 0, 360, is_closed=True, segments=200, noise=normalized_small_circle_radius,
+                                    small_cirlce_radius, 0, 360, is_closed=True, noise=normalized_small_circle_radius,
                                     line_thickness=line_thickness)
 
     return image
 
 
-def drawDoubleCircle(image, thickness = 6, radius = 150, start_angle = 185, end_angle = 265, num_segments = 50):
+def drawDoubleCircle(image, thickness = 6, radius = 150, start_angle = 185, end_angle = 265):
     height, width = image.shape[:2]
     center = (int(width / 2), int(height / 2))
     # As the noise is based on the radius, we want to normalize it in this case
     normalized_noise = 0.08 * (100/radius)
 
-    pts_top = generateCirclePolyLines(center, int(radius - thickness / 2), start_angle, end_angle, segments=num_segments, noise=normalized_noise,
+    pts_top = generateCirclePolyLines(center, int(radius - thickness / 2), start_angle, end_angle, noise=normalized_noise,
                                   smooth_noise=True)
 
-    pts_bottom = generateCirclePolyLines(center, int(radius + thickness / 2), start_angle, end_angle, segments=num_segments, noise=normalized_noise,
+    pts_bottom = generateCirclePolyLines(center, int(radius + thickness / 2), start_angle, end_angle, noise=normalized_noise,
                                   smooth_noise=True)
 
-    # Find the average of the two generated lines
-    points_centre = np.add(pts_top, pts_bottom)
-    points_centre = points_centre / 2
-    points_centre = np.array(points_centre, np.int32)
 
     # Due to winding order, we need to flip the bottom points again
     pts_bottom = numpy.flipud(pts_bottom)
@@ -199,20 +199,18 @@ def drawDoubleCircle(image, thickness = 6, radius = 150, start_angle = 185, end_
     # Actually draw them
     image = cv2.fillPoly(image, [pts], YELLOW)
 
-    image = cv2.polylines(image, [points_centre], False, WHITE, 1)
-
     return image
 
 
 def draw(image, line_thickness = 2, override_color = None):
     image = drawLines(image, line_thickness, override_color = override_color)
     image = drawCircles(image, line_thickness=line_thickness, override_color=override_color)
-    image = drawDoubleCircle(image, thickness=1, radius=150, start_angle=185, end_angle=209, num_segments=24)
+    image = drawDoubleCircle(image, thickness=1, radius=150, start_angle=185, end_angle=209)
 
-    image = drawDoubleCircle(image, thickness=3, radius=150, start_angle=213, end_angle=237, num_segments=24)
-    image = drawDoubleCircle(image, thickness=6, radius=150, start_angle=241, end_angle=265, num_segments=24)
+    image = drawDoubleCircle(image, thickness=3, radius=150, start_angle=213, end_angle=237)
+    image = drawDoubleCircle(image, thickness=6, radius=150, start_angle=241, end_angle=265)
 
-    image = drawDoubleCircle(image, thickness=1, radius=130, start_angle=197, end_angle=221, num_segments=24)
+    image = drawDoubleCircle(image, thickness=1, radius=130, start_angle=197, end_angle=221)
     return image
 
 
