@@ -161,19 +161,26 @@ def applyBlooming(image: np.ndarray, gausian_ksize: int = 9, blur_ksize: int = 5
     return image
 
 
+# Debug function for convenience
 def drawLines(image, line_thickness = 2, override_color = None):
-    # Debug function for convenience
+
     if override_color:
-        image = drawCircleWithPolyLines(image, override_color, center, 100, 0, 90, segments=50, line_thickness=line_thickness)
-        image = drawCircleWithPolyLines(image, override_color, center, radius=150, segments=15, begin_angle=30, end_angle=45,
-                                        line_thickness=line_thickness)
-        image = drawCircleWithPolyLines(image, override_color, center, 150, 60, 75, segments=10, line_thickness=line_thickness)
         image = drawCircleWithPolyLines(image, override_color, center, 100, 270, 360, segments=50, line_thickness=line_thickness)
     else:
-        image = drawCircleWithPolyLines(image, BLUE, center, 100, 0, 90, segments=50, line_thickness=line_thickness)
-        image = drawCircleWithPolyLines(image, BLUE, center, radius=150, segments=15, begin_angle=30, end_angle=45, line_thickness=line_thickness)
-        image = drawCircleWithPolyLines(image, BLUE, center, 150, 60, 75, segments=10, line_thickness=line_thickness)
         image = drawCircleWithPolyLines(image, RED, center, 100, 270, 360, segments=50, line_thickness=line_thickness)
+
+    if not override_color:
+        override_color = BLUE
+
+    image = drawCircleWithPolyLines(image, override_color, center, 100, 0, 90, segments=50,
+                                    line_thickness=line_thickness)
+    image = drawCircleWithPolyLines(image, override_color, center, radius=150, segments=15, begin_angle=30,
+                                    end_angle=45,
+                                    line_thickness=line_thickness)
+    image = drawCircleWithPolyLines(image, override_color, center, 150, 60, 75, segments=10,
+                                    line_thickness=line_thickness)
+
+
     return image
 
 
