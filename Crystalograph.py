@@ -85,8 +85,9 @@ def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noi
     noise_multiplier = []
     for segment in range(num_segments):
         # Calculate the noise
-        rand = np.sin(segment / 0.7) * np.random.random() + np.sin(segment / 1.1) * np.random.random() + np.sin(
-            segment / 1.5) * np.random.random()
+        rand_value = np.random.random()
+        rand = np.sin(segment / 0.7) * rand_value + np.sin(segment / 1.1) * rand_value + np.sin(
+            segment / 1.5) * rand_value
 
         noise_multiplier.append(0.5 * rand * noise + 0.5 * noise * np.random.random())
 
