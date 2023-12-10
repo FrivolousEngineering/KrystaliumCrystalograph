@@ -7,6 +7,7 @@ class KrystaliumSample(Base):
     __tablename__ = "krystalium_sample"
 
     id = Column(Integer, primary_key=True, index=True)
+    rfid_id = Column(String, unique=True)
 
     # Although these are technically enums, we just validate
     negative_action = Column(String, nullable=False)

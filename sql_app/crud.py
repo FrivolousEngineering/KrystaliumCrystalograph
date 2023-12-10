@@ -8,11 +8,16 @@ def getSamples(db: Session):
 
 
 def createSample(db: Session, sample: schemas.KrystaliumSampleCreate):
-    db_sample = models.KrystaliumSample()
+    # Just unpack all of it, we don't use any diffrent names, and DRY is a thing y'all.
+    db_sample = models.KrystaliumSample(**sample.__dict__)
     db.add(db_sample)
     db.commit()
     db.refresh(db_sample)
     return db_sample
+
+
+def getSampleByRFID(db: Session, rfid_id: str):
+    return db.query(models.KrystaliumSample).filter(models.KrystaliumSample.rfid_id == rfid_id).first()
 
 """def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()

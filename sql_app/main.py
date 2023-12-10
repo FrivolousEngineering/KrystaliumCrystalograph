@@ -17,14 +17,18 @@ def get_db():
     finally:
         db.close()
 
+
 @app.get("/samples/", response_model = list[schemas.KrystaliumSample])
 def read_samples(db: Session = Depends(get_db)):
     samples = crud.getSamples(db)
     return samples
 
+
 @app.post("/samples/", response_model=schemas.KrystaliumSample)
 def create_sample(sample: schemas.KrystaliumSampleCreate,  db: Session = Depends(get_db)):
-    # Todo: Check if sample with RFID ID already exists, if it does, raise httpException
+    db_sample = crud.getSampleByRFID(db, rfid_id=sample.rfid_id)
+    if db_sample:
+        raise HTTPException(status_code=400, detail="A sample with that RFID id has already been registered")
     return crud.createSample(db=db, sample=sample)
 
 """
