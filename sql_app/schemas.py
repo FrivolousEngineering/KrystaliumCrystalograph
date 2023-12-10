@@ -33,12 +33,21 @@ class Target(str, Enum):
     """
     flesh: str = "Flesh"
     mind: str = "Mind"
-    gas: str = "Mind"
+    gas: str = "Gas"
     solid: str = "Solid"
-    liquid: str = "Solid"
+    liquid: str = "Liquid"
     energy: str = "Energy"
     light: str = "Light"
     sound: str = "Sound"
+
+
+class Vulgarity(str, Enum):
+    precious = "Precious"
+    high_semi_precious = "High Semi-Precious"
+    low_semi_precious = "Low Semi-Precious"
+    high_mundane = "High Mundane"
+    low_mundane = "Low Mundane"
+    vulgar = "Vulgar"
 
 
 class KrystaliumSampleBase(BaseModel):
@@ -92,6 +101,7 @@ class KrystaliumSampleCreate(KrystaliumSampleBase):
 class KrystaliumSample(KrystaliumSampleBase):
     id: int
     depleted: bool = Field(description="A Sample is depleted if it has been used to create refined Krystalium. It can no longer be used to create other refined samples")
+    vulgarity: Vulgarity = Field()
 
     class Config:
         orm_mode = True

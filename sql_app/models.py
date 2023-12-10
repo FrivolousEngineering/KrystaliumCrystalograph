@@ -16,6 +16,8 @@ class KrystaliumSample(Base):
     positive_action = Column(String, nullable=False)
     positive_target = Column(String, nullable=False)
 
+    vulgarity = Column(String, nullable=False)
+
     # A sample is depleted if it was used to create a Refined Krystalium. From that point on, it can no longer
     # be used to create new samples.
     depleted = Column(Boolean, default=False)
