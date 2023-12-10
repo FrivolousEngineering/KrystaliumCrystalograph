@@ -3,6 +3,10 @@ from enum import Enum
 
 
 class Action(str, Enum):
+    """
+    All the actions that a sample of Krystalium can have. Each sample of Krystalium has two actions; One positively
+    charged action and one negatively charged action.
+    """
     expanding: str = "Expanding"
     conducting: str = "Conducting"
     deteriorate: str = "Deteriorate"
@@ -19,6 +23,10 @@ class Action(str, Enum):
 
 
 class Target(str, Enum):
+    """
+    All the targets that a sample of Krystalium can have. Each sample of Krystalium has two targets; One positively
+    charged target and one negatively charged target.
+    """
     flesh: str = "Flesh"
     mind: str = "Mind"
     gas: str = "Mind"
@@ -35,6 +43,7 @@ class KrystaliumSampleBase(BaseModel):
     positive_action: Action = Field(description = "The positive action of the Krystalium sample")
     positive_target: Target = Field(description = "The positive target of the Krystalium sample")
     rfid_id: str = Field(description = "The ID of the physical RFID in the sample")
+
 
 class KrystaliumSampleCreate(KrystaliumSampleBase):
     pass
