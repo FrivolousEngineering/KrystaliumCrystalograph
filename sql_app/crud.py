@@ -98,7 +98,6 @@ def createRefinedKrystaliumFromSamples(db: Session, positive_sample: models.Krys
 
 
 def generateOpposingTargetPair():
-    print(opposing_targets.getAllKnownTraits())
     value_1 = random.choice(opposing_targets.getAllKnownTraits())
     value_2 = random.choice(opposing_targets.getOpposites(value_1))
     return value_1, value_2
@@ -132,6 +131,24 @@ def generateConflictingTargetPair():
     return value_1, value_2
 
 
+def createRandomActionPair():
+    return random.choice(action_list), random.choice(action_list)
+
+
+def createRandomTargetPair():
+    return random.choice(target_list), random.choice(target_list),
+
+
+def createInvariantTargetPair():
+    result = random.choice(target_list)
+    return result, result
+
+
+def createInvariantActionPair():
+    result = random.choice(action_list)
+    return result, result
+
+
 def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]):
     db_sample = models.KrystaliumSample()
     db_sample.rfid_id = rfid_id
@@ -139,34 +156,24 @@ def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]
     match vulgarity:
         case None:
             # Completely random
-            db_sample.negative_action = random.choice(action_list)
-            db_sample.positive_action = random.choice(action_list)
-
-            db_sample.negative_target = random.choice(target_list)
-            db_sample.positive_target = random.choice(target_list)
+            db_sample.negative_action, db_sample.positive_action = createRandomActionPair()
+            db_sample.negative_target, db_sample.positive_target = createRandomTargetPair()
         case Vulgarity.precious:
-            db_sample.negative_action = random.choice(action_list)
-            db_sample.positive_action = db_sample.negative_action
-
-            db_sample.negative_target = random.choice(target_list)
-            db_sample.positive_target = db_sample.negative_target
-
+            db_sample.negative_action, db_sample.positive_action = createInvariantActionPair()
+            db_sample.negative_target, db_sample.positive_target = createInvariantTargetPair()
         case Vulgarity.high_semi_precious | Vulgarity.low_semi_precious:
             # One of the pairs needs to be the same, randomly decide which one
             action_invariant = bool(random.getrandbits(1))
             if action_invariant:
-                db_sample.negative_action = random.choice(action_list)
-                db_sample.positive_action = db_sample.negative_action
+                db_sample.negative_action, db_sample.positive_action = createInvariantActionPair()
             else:
-                db_sample.negative_target = random.choice(target_list)
-                db_sample.positive_target = db_sample.negative_target
+                db_sample.negative_target, db_sample.positive_target = createInvariantTargetPair()
             if vulgarity == Vulgarity.high_semi_precious:
                 if action_invariant:
-                    # We need to generate a target that has an opposite
                     db_sample.negative_target, db_sample.positive_target = generateOpposingTargetPair()
                 else:
                     db_sample.negative_action, db_sample.positive_action = generateOpposingActionPair()
-            else:
+            else:  # Low semi precious
                 if action_invariant:
                     db_sample.negative_target, db_sample.positive_target = generateConflictingTargetPair()
                 else:
@@ -175,6 +182,7 @@ def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]
             db_sample.negative_target, db_sample.positive_target = generateOpposingTargetPair()
             db_sample.negative_action, db_sample.positive_action = generateOpposingActionPair()
         case vulgarity.low_mundane:
+            # Randomly generate if we want action or target to be conflicting
             action_conflicting = bool(random.getrandbits(1))
             if action_conflicting:
                 db_sample.negative_action, db_sample.positive_action = generateConflictingActionPair()
