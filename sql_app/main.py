@@ -21,13 +21,13 @@ def get_db():
 def checkUniqueRFID(db, rfid_id: str):
     db_sample = crud.getSampleByRFID(db, rfid_id=rfid_id)
     if db_sample:
-        raise HTTPException(status_code=400, detail="A krystalium sample with that RFID id has already been registered")
+        raise HTTPException(status_code=400, detail=f"A Krystalium sample with the RFID id [{rfid_id}] has already been registered")
 
     # Check if the RFID is already used for a refined Krystalium
     db_refined = crud.getRefineKrystaliumdByRFID(db, rfid_id=rfid_id)
     if db_refined:
         raise HTTPException(status_code=400,
-                            detail="A refined krystalium with that RFID id has already been registered")
+                            detail=f"A refined Krystalium with the RFID id [{rfid_id}] has already been registered")
 
 
 @app.get("/samples/", response_model=list[schemas.KrystaliumSample])
@@ -40,6 +40,10 @@ def get_all_krystalium_samples(db: Session = Depends(get_db)):
 
 @app.get("/samples/{rfid_id}", response_model=schemas.KrystaliumSample)
 def get_krystalium_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
+    """
+    Get a single raw Krystalium sample by RFID. If it doesn't find anything, you might want to try checking if it's
+    refined Krystalium instead!
+    """
     db_sample = crud.getSampleByRFID(db, rfid_id=rfid_id)
     if not db_sample:
         raise HTTPException(status_code=404, detail=f"Krystalium Sample with RFID [{rfid_id}] was not found")
@@ -58,11 +62,18 @@ def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session
 
 @app.get("/refined/", response_model=list[schemas.RefinedKrystalium])
 def get_all_refined_krystalium(db: Session = Depends(get_db)):
+    """
+    Get a list of all known refined Krystalium
+    """
     return crud.getAllRefinedKrystalium(db)
 
 
 @app.get("/refined/{rfid_id}", response_model=schemas.RefinedKrystalium)
 def get_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
+    """
+    Get a single refined Krystalium by RFID. If it doesn't find anything, you might want to try checking if it's
+    a sample instead!
+    """
     db_refined = crud.getRefineKrystaliumdByRFID(db, rfid_id=rfid_id)
     if not db_refined:
         raise HTTPException(status_code=404, detail=f"Refined Krystalium with RFID [{rfid_id}] was not found")
