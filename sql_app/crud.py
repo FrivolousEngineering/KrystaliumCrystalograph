@@ -23,6 +23,10 @@ opposing_actions.addPair(Action.solidify, Action.lighten)
 action_list = list(Action)
 target_list = list(Target)
 
+
+
+
+
 def getAllKrystaliumSamples(db: Session):
     return db.query(models.KrystaliumSample).all()
 

@@ -62,12 +62,48 @@ class Vulgarity(str, Enum):
 
     When there are no invariants, but one or two opposing, it's mundane (two opposing being high, one low)
     """
-    precious = "Precious"
-    high_semi_precious = "High Semi-Precious"
-    low_semi_precious = "Low Semi-Precious"
-    high_mundane = "High Mundane"
-    low_mundane = "Low Mundane"
     vulgar = "Vulgar"
+    low_mundane = "Low Mundane"
+    high_mundane = "High Mundane"
+    low_semi_precious = "Low Semi-Precious"
+    high_semi_precious = "High Semi-Precious"
+    precious = "Precious"
+
+    @staticmethod
+    def getScore(vulgarity: "Vulgarity") -> int:
+        return list(Vulgarity).index(vulgarity) + 1
+
+    @staticmethod
+    def getByScore(score: int) -> "Vulgarity":
+        return list(Vulgarity)[score - 1]
+
+
+class Purity(str, Enum):
+    """
+    Purity is calculated relatively simply. As we have 6 steps of vulgarity, we simply give precious a score of 6
+    and vulgar a score of 1. We then just combine the score of both samples to find out the purity of the sample
+    """
+
+    tainted = "Tainted"
+    polluted = "Polluted"
+    tarnished = "Tarnished"
+    dirty = "Dirty"
+    blemished = "Blemished"
+    impure = "Impure"
+    unblemished = "Unblemished"
+    lucid = "Lucid"
+    stainless = "Stainless"
+    pristine = "Pristine"
+    immaculate = "Immaculate"
+    perfect = "Perfect"
+
+    @staticmethod
+    def getScore(purity: "Purity") -> int:
+        return list(Purity).index(purity) + 1
+
+    @staticmethod
+    def getByScore(score: int) -> "Purity":
+        return list(Purity)[score - 1]
 
 
 class KrystaliumSampleBase(BaseModel):
