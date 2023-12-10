@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
+from .schemas import BadRequestError
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -50,7 +51,7 @@ def get_krystalium_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     return db_sample
 
 
-@app.post("/samples/", response_model=schemas.KrystaliumSample)
+@app.post("/samples/", response_model=schemas.KrystaliumSample, responses={400: {"model": BadRequestError}})
 def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session = Depends(get_db)):
     """
     Add a new (raw) Krystalium sample to the DB.
@@ -60,7 +61,7 @@ def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session
     return crud.createSample(db=db, sample=sample)
 
 
-@app.post("/sample/random/", response_model=schemas.KrystaliumSample)
+@app.post("/sample/random/", response_model=schemas.KrystaliumSample, responses={400: {"model": BadRequestError}})
 def create_random_krystalium_sample(sample: schemas.RandomKrystaliumSampleCreate, db: Session = Depends(get_db)):
     checkUniqueRFID(db, sample.rfid_id)
 
@@ -87,14 +88,14 @@ def get_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     return db_refined
 
 
-@app.post("/refined/", response_model=schemas.RefinedKrystalium)
+@app.post("/refined/", response_model=schemas.RefinedKrystalium, responses={400: {"model": BadRequestError}})
 def create_refined_krystalium(refined_krystalium: schemas.RefinedKrystaliumCreate, db: Session = Depends(get_db)):
     # Check if the RFID is already used for a sample
     checkUniqueRFID(db, refined_krystalium.rfid_id)
     return crud.createRefinedKrystalium(db=db, refined_krystalium=refined_krystalium)
 
 
-@app.post("/refined/create_from_samples/", response_model=schemas.RefinedKrystalium)
+@app.post("/refined/create_from_samples/", response_model=schemas.RefinedKrystalium, responses={400: {"model": BadRequestError}})
 def create_refined_crystalium_from_samples(creation_request: schemas.RefinedKrystaliumFromSample, db: Session = Depends(get_db)):
     """
     Combine two raw Krystalium samples into a refined Krystalium sample.
@@ -130,7 +131,7 @@ def create_refined_crystalium_from_samples(creation_request: schemas.RefinedKrys
             db_positive_sample.positive_action == db_negative_sample.positive_action and \
             db_positive_sample.negative_action == db_negative_sample.negative_action:
         raise HTTPException(status_code=400,
-                            detail=f"The samples must have at least one property different from eachother")
+                            detail=f"The samples must have at least one property different from each other")
     # The provided refined Krystalium rfid id must be unique
     checkUniqueRFID(db, creation_request.refined_krystalium_rfid_id)
 

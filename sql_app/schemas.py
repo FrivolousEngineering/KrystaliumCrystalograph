@@ -182,3 +182,7 @@ class RefinedKrystaliumFromSample(BaseModel):
 class RandomKrystaliumSampleCreate(BaseModel):
     rfid_id: str = Field(description="The ID of the physical RFID in the sample")
     vulgarity: Optional[Vulgarity] = Field(None, description="When set, it will create a sample with the given vulgarity. If not set, it will entirely randomly create one")
+
+
+class BadRequestError(BaseModel):
+    error_message: str
