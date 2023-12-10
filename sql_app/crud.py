@@ -136,22 +136,22 @@ def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]
     db_sample = models.KrystaliumSample()
     db_sample.rfid_id = rfid_id
 
-    if vulgarity is None:
-        # Completely random
-        db_sample.negative_action = random.choice(action_list)
-        db_sample.positive_action = random.choice(action_list)
+    match vulgarity:
+        case None:
+            # Completely random
+            db_sample.negative_action = random.choice(action_list)
+            db_sample.positive_action = random.choice(action_list)
 
-        db_sample.negative_target = random.choice(target_list)
-        db_sample.positive_target = random.choice(target_list)
-    else:
-        if vulgarity == Vulgarity.precious:
+            db_sample.negative_target = random.choice(target_list)
+            db_sample.positive_target = random.choice(target_list)
+        case Vulgarity.precious:
             db_sample.negative_action = random.choice(action_list)
             db_sample.positive_action = db_sample.negative_action
 
             db_sample.negative_target = random.choice(target_list)
             db_sample.positive_target = db_sample.negative_target
 
-        if vulgarity == Vulgarity.high_semi_precious or vulgarity == Vulgarity.low_semi_precious:
+        case Vulgarity.high_semi_precious | Vulgarity.low_semi_precious:
             # One of the pairs needs to be the same, randomly decide which one
             action_invariant = bool(random.getrandbits(1))
             if action_invariant:
@@ -171,11 +171,10 @@ def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]
                     db_sample.negative_target, db_sample.positive_target = generateConflictingTargetPair()
                 else:
                     db_sample.negative_action, db_sample.positive_action = generateConflictingActionPair()
-
-        if vulgarity == Vulgarity.high_mundane:
+        case Vulgarity.high_mundane:
             db_sample.negative_target, db_sample.positive_target = generateOpposingTargetPair()
             db_sample.negative_action, db_sample.positive_action = generateOpposingActionPair()
-        if vulgarity == vulgarity.low_mundane:
+        case vulgarity.low_mundane:
             action_conflicting = bool(random.getrandbits(1))
             if action_conflicting:
                 db_sample.negative_action, db_sample.positive_action = generateConflictingActionPair()
@@ -183,13 +182,13 @@ def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]
             else:
                 db_sample.negative_action, db_sample.positive_action = generateOpposingActionPair()
                 db_sample.negative_target, db_sample.positive_target = generateConflictingTargetPair()
-        if vulgarity == Vulgarity.vulgar:
+        case Vulgarity.vulgar:
             db_sample.negative_target, db_sample.positive_target = generateConflictingTargetPair()
             db_sample.negative_action, db_sample.positive_action = generateConflictingActionPair()
 
     db_sample.vulgarity = findVulgarity(db_sample.positive_action, db_sample.negative_action, db_sample.positive_target,
                                         db_sample.negative_target)
-    if vulgarity:
+    if vulgarity is not None:
         assert db_sample.vulgarity == vulgarity, "Calculated vulgarity and provided vulgarity must be the same!"
     db.add(db_sample)
     db.commit()
