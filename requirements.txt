@@ -4,3 +4,5 @@ pygame
 scipy
 sqlalchemy
 fastapi
+pydantic
+uvicorn
