@@ -38,6 +38,14 @@ def get_all_krystalium_samples(db: Session = Depends(get_db)):
     return crud.getAllKrystaliumSamples(db)
 
 
+@app.get("/samples/{rfid_id}", response_model=schemas.KrystaliumSample)
+def get_krystalium_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
+    db_sample = crud.getSampleByRFID(db, rfid_id=rfid_id)
+    if not db_sample:
+        raise HTTPException(status_code=404, detail=f"Krystalium Sample with RFID [{rfid_id}] was not found")
+    return db_sample
+
+
 @app.post("/samples/", response_model=schemas.KrystaliumSample)
 def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session = Depends(get_db)):
     """
@@ -53,8 +61,17 @@ def get_all_refined_krystalium(db: Session = Depends(get_db)):
     return crud.getAllRefinedKrystalium(db)
 
 
+@app.get("/refined/{rfid_id}", response_model=schemas.RefinedKrystalium)
+def get_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
+    db_refined = crud.getRefineKrystaliumdByRFID(db, rfid_id=rfid_id)
+    if not db_refined:
+        raise HTTPException(status_code=404, detail=f"Refined Krystalium with RFID [{rfid_id}] was not found")
+    return db_refined
+
+
 @app.post("/refined/", response_model=schemas.RefinedKrystalium)
 def create_refined_krystalium(refined_krystalium: schemas.RefinedKrystaliumCreate, db: Session = Depends(get_db)):
     # Check if the RFID is already used for a sample
     checkUniqueRFID(db, refined_krystalium.rfid_id)
     return crud.createRefinedKrystalium(db=db, refined_krystalium=refined_krystalium)
+
