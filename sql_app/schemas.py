@@ -1,6 +1,6 @@
 from typing import Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from enum import Enum
 
 
@@ -84,7 +84,6 @@ class Purity(str, Enum):
     and vulgar a score of 1. We then just combine the score of both samples to find out the purity of the sample
     """
 
-    tainted = "Tainted"
     polluted = "Polluted"
     tarnished = "Tarnished"
     dirty = "Dirty"
@@ -99,11 +98,11 @@ class Purity(str, Enum):
 
     @staticmethod
     def getScore(purity: Union["Purity", str]) -> int:
-        return list(Purity).index(purity) + 1
+        return list(Purity).index(purity) + 2
 
     @staticmethod
     def getByScore(score: int) -> "Purity":
-        return list(Purity)[score - 1]
+        return list(Purity)[score - 2]
 
 
 class KrystaliumSampleBase(BaseModel):
@@ -143,6 +142,11 @@ class RefinedKrystaliumBase(BaseModel):
 class RefinedKrystalium(RefinedKrystaliumBase):
     id: int
 
+    @computed_field(description="The numerical representation of the purity. Two indicates polluted, 12 indicates perfect")
+    @property
+    def purity_score(self) -> int:
+        return Purity.getScore(self.purity)
+
     class Config:
         orm_mode = True
 
@@ -159,6 +163,11 @@ class KrystaliumSample(KrystaliumSampleBase):
     id: int
     depleted: bool = Field(description="A Sample is depleted if it has been used to create refined Krystalium. It can no longer be used to create other refined samples")
     vulgarity: Vulgarity = Field()
+
+    @computed_field(description="The numerical representation of the vulgarity. One indicates vulgar, 6 indicates precious")
+    @property
+    def vulgarity_score(self) -> int:
+        return Vulgarity.getScore(self.vulgarity)
 
     class Config:
         orm_mode = True
