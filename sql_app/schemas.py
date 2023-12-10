@@ -93,3 +93,8 @@ class KrystaliumSample(KrystaliumSampleBase):
     class Config:
         orm_mode = True
 
+
+class RefinedKrystaliumFromSample(BaseModel):
+    positive_sample_rfid_id: str
+    negative_sample_rfid_id: str
+    refined_krystalium_rfid_id: str

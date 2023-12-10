@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from . import models, schemas
@@ -29,11 +31,26 @@ def createRefinedKrystalium(db: Session, refined_krystalium: schemas.RefinedKrys
     return db_refined_krystalium
 
 
-def getSampleByRFID(db: Session, rfid_id: str):
+def createRefinedKrystaliumFromSamples(db: Session, positive_sample: models.KrystaliumSample, negative_sample: models.KrystaliumSample, refined_rfid_id: str):
+    db_refined = models.RefinedKrystalium()
+    db_refined.primary_action = positive_sample.positive_action
+    db_refined.primary_target = negative_sample.negative_target
+
+    db_refined.secondary_action = negative_sample.negative_action
+    db_refined.secondary_target = positive_sample.positive_target
+    db_refined.rfid_id = refined_rfid_id
+
+    db.add(db_refined)
+    db.commit()
+    db.refresh(db_refined)
+    return db_refined
+
+
+def getSampleByRFID(db: Session, rfid_id: str) -> Optional[models.KrystaliumSample]:
     return db.query(models.KrystaliumSample).filter(models.KrystaliumSample.rfid_id == rfid_id).first()
 
 
-def getRefineKrystaliumdByRFID(db: Session, rfid_id: str):
+def getRefineKrystaliumdByRFID(db: Session, rfid_id: str) -> Optional[models.KrystaliumSample]:
     return db.query(models.RefinedKrystalium).filter(models.RefinedKrystalium.rfid_id == rfid_id).first()
 
 """def get_user(db: Session, user_id: int):
