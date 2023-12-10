@@ -3,8 +3,12 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 
 
-def getSamples(db: Session):
+def getAllKrystaliumSamples(db: Session):
     return db.query(models.KrystaliumSample).all()
+
+
+def getAllRefinedKrystalium(db: Session):
+    return db.query(models.RefinedKrystalium).all()
 
 
 def createSample(db: Session, sample: schemas.KrystaliumSampleCreate):

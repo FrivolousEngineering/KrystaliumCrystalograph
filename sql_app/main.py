@@ -30,17 +30,16 @@ def checkUniqueRFID(db, rfid_id: str):
                             detail="A refined krystalium with that RFID id has already been registered")
 
 
-@app.get("/samples/", response_model = list[schemas.KrystaliumSample])
-def read_samples(db: Session = Depends(get_db)):
+@app.get("/samples/", response_model=list[schemas.KrystaliumSample])
+def get_all_krystalium_samples(db: Session = Depends(get_db)):
     """
     Get all known (raw) Krystalium samples
     """
-    samples = crud.getSamples(db)
-    return samples
+    return crud.getAllKrystaliumSamples(db)
 
 
 @app.post("/samples/", response_model=schemas.KrystaliumSample)
-def create_sample(sample: schemas.KrystaliumSampleCreate, db: Session = Depends(get_db)):
+def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session = Depends(get_db)):
     """
     Add a new (raw) Krystalium sample to the DB.
     """
@@ -49,9 +48,13 @@ def create_sample(sample: schemas.KrystaliumSampleCreate, db: Session = Depends(
     return crud.createSample(db=db, sample=sample)
 
 
+@app.get("/refined/", response_model=list[schemas.RefinedKrystalium])
+def get_all_refined_krystalium(db: Session = Depends(get_db)):
+    return crud.getAllRefinedKrystalium(db)
+
+
 @app.post("/refined/", response_model=schemas.RefinedKrystalium)
 def create_refined_krystalium(refined_krystalium: schemas.RefinedKrystaliumCreate, db: Session = Depends(get_db)):
     # Check if the RFID is already used for a sample
     checkUniqueRFID(db, refined_krystalium.rfid_id)
     return crud.createRefinedKrystalium(db=db, refined_krystalium=refined_krystalium)
-
