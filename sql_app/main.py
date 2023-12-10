@@ -96,9 +96,18 @@ def create_refined_krystalium(refined_krystalium: schemas.RefinedKrystaliumCreat
 
 @app.post("/refined/create_from_samples/", response_model=schemas.RefinedKrystalium)
 def create_refined_crystalium_from_samples(creation_request: schemas.RefinedKrystaliumFromSample, db: Session = Depends(get_db)):
+    """
+    Combine two raw Krystalium samples into a refined Krystalium sample.
+
+    This can fail in the following situations:
+
+    1. You try to use the exact same sample (so scan same RFID twice)
+    2. You use two samples that have the exact same properties
+    3. The refined krystalium rfid is already used by something else
+    """
     if creation_request.positive_sample_rfid_id == creation_request.negative_sample_rfid_id:
         raise HTTPException(status_code=400,
-                            detail=f"The positive and negative sample must be different!")
+                            detail=f"You must use different samples")
 
     db_positive_sample = crud.getSampleByRFID(db, rfid_id=creation_request.positive_sample_rfid_id)
     if not db_positive_sample:
@@ -115,6 +124,13 @@ def create_refined_crystalium_from_samples(creation_request: schemas.RefinedKrys
     if db_negative_sample.depleted:
         raise HTTPException(status_code=400, detail=f"The negative sample is depleted, so it can't be used")
 
+    # Check if the samples are exactly the same (eg have same targets & actions)
+    if db_positive_sample.positive_target == db_negative_sample.positive_target and \
+            db_positive_sample.negative_target == db_negative_sample.negative_target and \
+            db_positive_sample.positive_action == db_negative_sample.positive_action and \
+            db_positive_sample.negative_action == db_negative_sample.negative_action:
+        raise HTTPException(status_code=400,
+                            detail=f"The samples must have at least one property different from eachother")
     # The provided refined Krystalium rfid id must be unique
     checkUniqueRFID(db, creation_request.refined_krystalium_rfid_id)
 
