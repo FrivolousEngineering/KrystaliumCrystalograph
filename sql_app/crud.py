@@ -35,7 +35,7 @@ def getAllRefinedKrystalium(db: Session):
     return db.query(models.RefinedKrystalium).all()
 
 
-def findVulgarity(positive_action, negative_action, positive_target, negative_target, *args, **kwargs) -> Vulgarity:
+def findVulgarityFromProperties(positive_action, negative_action, positive_target, negative_target, *args, **kwargs) -> Vulgarity:
     target_invariant = positive_target == negative_target
     action_invariant = positive_action == negative_action
 
@@ -67,7 +67,7 @@ def findVulgarity(positive_action, negative_action, positive_target, negative_ta
 def createSample(db: Session, sample: schemas.KrystaliumSampleCreate):
     # Just unpack all of it, we don't use any diffrent names, and DRY is a thing y'all.
     db_sample = models.KrystaliumSample(**sample.__dict__)
-    db_sample.vulgarity = findVulgarity(**sample.__dict__)
+    db_sample.vulgarity = findVulgarityFromProperties(**sample.__dict__)
     db.add(db_sample)
     db.commit()
     db.refresh(db_sample)
@@ -198,8 +198,8 @@ def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]
             db_sample.negative_target, db_sample.positive_target = generateConflictingTargetPair()
             db_sample.negative_action, db_sample.positive_action = generateConflictingActionPair()
 
-    db_sample.vulgarity = findVulgarity(db_sample.positive_action, db_sample.negative_action, db_sample.positive_target,
-                                        db_sample.negative_target)
+    db_sample.vulgarity = findVulgarityFromProperties(db_sample.positive_action, db_sample.negative_action, db_sample.positive_target,
+                                                      db_sample.negative_target)
     if vulgarity is not None:
         assert db_sample.vulgarity == vulgarity, "Calculated vulgarity and provided vulgarity must be the same!"
     db.add(db_sample)
