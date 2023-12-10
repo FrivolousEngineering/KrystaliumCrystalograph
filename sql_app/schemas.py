@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 from enum import Enum
@@ -70,7 +70,7 @@ class Vulgarity(str, Enum):
     precious = "Precious"
 
     @staticmethod
-    def getScore(vulgarity: "Vulgarity") -> int:
+    def getScore(vulgarity: Union["Vulgarity", str]) -> int:
         return list(Vulgarity).index(vulgarity) + 1
 
     @staticmethod
@@ -98,7 +98,7 @@ class Purity(str, Enum):
     perfect = "Perfect"
 
     @staticmethod
-    def getScore(purity: "Purity") -> int:
+    def getScore(purity: Union["Purity", str]) -> int:
         return list(Purity).index(purity) + 1
 
     @staticmethod
@@ -137,6 +137,7 @@ class RefinedKrystaliumBase(BaseModel):
     secondary_action: Action = Field(description="The secondary action of the refined Krystalium")
     secondary_target: Target = Field(description="The secondary target of the refined Krystalium")
     rfid_id: str = Field(description="The ID of the physical RFID in the sample")
+    purity: Purity = Field(description="How pure / strong is the sample")
 
 
 class RefinedKrystalium(RefinedKrystaliumBase):

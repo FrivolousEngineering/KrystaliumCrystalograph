@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from .OpposingTraitController import OpposingTraitController
 
-from .schemas import Vulgarity, Target, Action
+from .schemas import Vulgarity, Target, Action, Purity
 import random
 
 
@@ -22,9 +22,6 @@ opposing_actions.addPair(Action.solidify, Action.lighten)
 
 action_list = list(Action)
 target_list = list(Target)
-
-
-
 
 
 def getAllKrystaliumSamples(db: Session):
@@ -94,6 +91,8 @@ def createRefinedKrystaliumFromSamples(db: Session, positive_sample: models.Krys
 
     positive_sample.depleted = True
     negative_sample.depleted = True
+
+    db_refined.purity = Purity.getByScore(Vulgarity.getScore(positive_sample.vulgarity) + Vulgarity.getScore(negative_sample.vulgarity))
 
     db.add(db_refined)
     db.commit()

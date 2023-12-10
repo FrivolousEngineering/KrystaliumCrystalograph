@@ -36,3 +36,5 @@ class RefinedKrystalium(Base):
     secondary_action = Column(String, nullable=False)
     secondary_target = Column(String, nullable=False)
 
+    purity = Column(String, nullable=False)
+
