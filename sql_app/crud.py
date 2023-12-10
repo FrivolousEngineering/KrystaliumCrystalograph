@@ -6,6 +6,7 @@ from . import models, schemas
 from .OpposingTraitController import OpposingTraitController
 
 from .schemas import Vulgarity, Target, Action
+import random
 
 
 opposing_targets = OpposingTraitController()
@@ -28,16 +29,18 @@ def getAllRefinedKrystalium(db: Session):
     return db.query(models.RefinedKrystalium).all()
 
 
-def findVulgarity(sample: schemas.KrystaliumSampleCreate) -> Vulgarity:
-    target_invariant = sample.positive_target == sample.negative_target
-    action_invariant = sample.positive_action == sample.negative_action
+
+
+def findVulgarity(positive_action, negative_action, positive_target, negative_target, *args, **kwargs) -> Vulgarity:
+    target_invariant = positive_target == negative_target
+    action_invariant = positive_action == negative_action
 
     if target_invariant and action_invariant:
         return Vulgarity.precious
 
-    is_action_opposing = opposing_actions.areOpposed(sample.positive_action, sample.negative_action)
+    is_action_opposing = opposing_actions.areOpposed(positive_action, negative_action)
 
-    is_target_opposing = opposing_targets.areOpposed(sample.positive_target.value, sample.negative_target)
+    is_target_opposing = opposing_targets.areOpposed(positive_target.value, negative_target)
 
     if target_invariant or action_invariant:
         # It's semi-precious, but now to figure out if it's high or low!
@@ -60,7 +63,7 @@ def findVulgarity(sample: schemas.KrystaliumSampleCreate) -> Vulgarity:
 def createSample(db: Session, sample: schemas.KrystaliumSampleCreate):
     # Just unpack all of it, we don't use any diffrent names, and DRY is a thing y'all.
     db_sample = models.KrystaliumSample(**sample.__dict__)
-    db_sample.vulgarity = findVulgarity(sample)
+    db_sample.vulgarity = findVulgarity(**sample.__dict__)
     db.add(db_sample)
     db.commit()
     db.refresh(db_sample)
@@ -92,6 +95,33 @@ def createRefinedKrystaliumFromSamples(db: Session, positive_sample: models.Krys
     db.commit()
     db.refresh(db_refined)
     return db_refined
+
+
+def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]):
+    db_sample = models.KrystaliumSample()
+
+    if vulgarity is None:
+        action_list = list(Action)
+        target_list = list(Target)
+        # For now just ignore the vulgarity
+        db_sample.negative_action = random.choice(action_list)
+        db_sample.positive_action = random.choice(action_list)
+
+        db_sample.negative_target = random.choice(target_list)
+        db_sample.positive_target = random.choice(target_list)
+
+        db_sample.rfid_id = rfid_id
+
+        db_sample.vulgarity = findVulgarity(db_sample.positive_action, db_sample.negative_action, db_sample.positive_target, db_sample.negative_target)
+    else:
+        # TODO
+        pass
+
+    db.add(db_sample)
+    db.commit()
+    db.refresh(db_sample)
+    return db_sample
+
 
 
 def getSampleByRFID(db: Session, rfid_id: str) -> Optional[models.KrystaliumSample]:

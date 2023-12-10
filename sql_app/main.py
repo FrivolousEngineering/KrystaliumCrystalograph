@@ -60,6 +60,13 @@ def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session
     return crud.createSample(db=db, sample=sample)
 
 
+@app.post("/sample/random/", response_model=schemas.KrystaliumSample)
+def create_random_krystalium_sample(sample: schemas.RandomKrystaliumSampleCreate, db: Session = Depends(get_db)):
+    checkUniqueRFID(db, sample.rfid_id)
+
+    return crud.createRandomSample(db, rfid_id = sample.rfid_id, vulgarity = sample.vulgarity)
+
+
 @app.get("/refined/", response_model=list[schemas.RefinedKrystalium])
 def get_all_refined_krystalium(db: Session = Depends(get_db)):
     """
@@ -113,3 +120,5 @@ def create_refined_crystalium_from_samples(creation_request: schemas.RefinedKrys
 
     # We're good to go!
     return crud.createRefinedKrystaliumFromSamples(db, negative_sample=db_negative_sample, positive_sample=db_positive_sample, refined_rfid_id=creation_request.refined_krystalium_rfid_id)
+
+

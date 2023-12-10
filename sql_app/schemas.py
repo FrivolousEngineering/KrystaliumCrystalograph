@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -129,3 +131,8 @@ class RefinedKrystaliumFromSample(BaseModel):
     positive_sample_rfid_id: str
     negative_sample_rfid_id: str
     refined_krystalium_rfid_id: str
+
+
+class RandomKrystaliumSampleCreate(BaseModel):
+    rfid_id: str = Field(description="The ID of the physical RFID in the sample")
+    vulgarity: Optional[Vulgarity] = Field(None, description="When set, it will create a sample with the given vulgarity. If not set, it will entirely randomly create one")
