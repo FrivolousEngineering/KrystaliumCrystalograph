@@ -40,6 +40,9 @@ def createRefinedKrystaliumFromSamples(db: Session, positive_sample: models.Krys
     db_refined.secondary_target = positive_sample.positive_target
     db_refined.rfid_id = refined_rfid_id
 
+    positive_sample.depleted = True
+    negative_sample.depleted = True
+
     db.add(db_refined)
     db.commit()
     db.refresh(db_refined)

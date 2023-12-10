@@ -76,6 +76,7 @@ class RefinedKrystaliumBase(BaseModel):
 
 class RefinedKrystalium(RefinedKrystaliumBase):
     id: int
+
     class Config:
         orm_mode = True
 
@@ -90,6 +91,8 @@ class KrystaliumSampleCreate(KrystaliumSampleBase):
 
 class KrystaliumSample(KrystaliumSampleBase):
     id: int
+    depleted: bool = Field(description="A Sample is depleted if it has been used to create refined Krystalium. It can no longer be used to create other refined samples")
+
     class Config:
         orm_mode = True
 

@@ -97,14 +97,19 @@ def create_refined_crystalium_from_samples(creation_request: schemas.RefinedKrys
     if not db_positive_sample:
         raise HTTPException(status_code=400, detail=f"Krystalium Sample for the positive slot with RFID [{creation_request.positive_sample_rfid_id}] was not found")
 
+    if db_positive_sample.depleted:
+        raise HTTPException(status_code=400, detail=f"The positive sample is depleted, so it can't be used")
+
     db_negative_sample = crud.getSampleByRFID(db, rfid_id=creation_request.negative_sample_rfid_id)
     if not db_negative_sample:
         raise HTTPException(status_code=400,
                             detail=f"Krystalium Sample for the negative slot with RFID [{creation_request.negative_sample_rfid_id}] was not found")
 
+    if db_negative_sample.depleted:
+        raise HTTPException(status_code=400, detail=f"The negative sample is depleted, so it can't be used")
+
     # The provided refined Krystalium rfid id must be unique
     checkUniqueRFID(db, creation_request.refined_krystalium_rfid_id)
 
     # We're good to go!
-
     return crud.createRefinedKrystaliumFromSamples(db, negative_sample=db_negative_sample, positive_sample=db_positive_sample, refined_rfid_id=creation_request.refined_krystalium_rfid_id)
