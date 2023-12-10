@@ -16,8 +16,21 @@ def createSample(db: Session, sample: schemas.KrystaliumSampleCreate):
     return db_sample
 
 
+def createRefinedKrystalium(db: Session, refined_krystalium: schemas.RefinedKrystaliumCreate):
+    # Just unpack all of it, we don't use any diffrent names, and DRY is a thing y'all.
+    db_refined_krystalium = models.RefinedKrystalium(**refined_krystalium.__dict__)
+    db.add(db_refined_krystalium)
+    db.commit()
+    db.refresh(db_refined_krystalium)
+    return db_refined_krystalium
+
+
 def getSampleByRFID(db: Session, rfid_id: str):
     return db.query(models.KrystaliumSample).filter(models.KrystaliumSample.rfid_id == rfid_id).first()
+
+
+def getRefineKrystaliumdByRFID(db: Session, rfid_id: str):
+    return db.query(models.RefinedKrystalium).filter(models.RefinedKrystalium.rfid_id == rfid_id).first()
 
 """def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
