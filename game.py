@@ -75,14 +75,14 @@ if __name__ == '__main__':
 
     #Middle
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x, center_y),
+                                base_color="blue_2", center=(center_x, center_y),
                                 spikes = [(60, 20, 0.2),
                                           (10, 5, 0.2),
                                           (300, 25, 0.2)])
 
     #Outer
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x, center_y),
+                                base_color="blue_3", center=(center_x, center_y),
                                 spikes=[(80, 25, 0.15),
                                         (120, 5, 0.2),
                                         (150, 5, 0.15),
@@ -90,10 +90,13 @@ if __name__ == '__main__':
 
     crystalograph.setup()
     fader = Fader()
+    screen_shake = 0
+
     while running:
         crystalograph.createEmptyImage((screen_width, screen_height))
         image = crystalograph.draw()
         screen.fill((0, 0, 0))
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -108,6 +111,17 @@ if __name__ == '__main__':
                 fader.fadeIn()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
                 fader.fadeOut()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
+                screen_shake += 1
+
+        if screen_shake:
+            screen_displacement_x = random.randint(0, 8) - 4
+            screen_displacement_y = random.randint(0, 8) - 4
+            screen_shake -= 1
+        else:
+            screen_displacement_x = 0
+            screen_displacement_y = 0
+
 
         fader.update()
 
@@ -115,7 +129,7 @@ if __name__ == '__main__':
         # Because pygame and numpy use different coordinate systems,
         # the numpy image has to be flipped and rotated, before being blit.
         img = pygame.surfarray.make_surface(np.fliplr(np.rot90(image, k=-1)))
-        screen.blit(img, (0, 0))
+        screen.blit(img, (screen_displacement_x, screen_displacement_y))
         fader.draw(screen)
         pygame.display.flip()
         crystalograph.update()
