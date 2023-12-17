@@ -1,4 +1,5 @@
 import contextlib
+import math
 from typing import Tuple
 
 # This suppresses the `Hello from pygame` message.
@@ -18,15 +19,46 @@ if __name__ == '__main__':
     crystalograph = Crystalograph.Crystalograph()
     crystalograph.createEmptyImage((1024, 768))
 
-    crystalograph.addLineToDraw(line_type="line", thickness=2, radius=150, begin_angle=185, end_angle=209,
+    """crystalograph.addLineToDraw(line_type="double_line", thickness=2, radius=150, begin_angle=185, end_angle=209,
                                 base_color="blue", center=crystalograph._center)
-    crystalograph.addLineToDraw(line_type="line", thickness=2, radius=200, begin_angle=185, end_angle=209,
-                                base_color="red", center=crystalograph._center)
-    crystalograph.addLineToDraw(line_type="line", thickness=2, radius=300, begin_angle=185, end_angle=209,
-                                base_color="red", center=crystalograph._center)
+    crystalograph.addLineToDraw(line_type="double_line", thickness=2, radius=200, begin_angle=185, end_angle=209,
+                                base_color="blue", center=crystalograph._center)
+    crystalograph.addLineToDraw(line_type="double_line", thickness=2, radius=300, begin_angle=185, end_angle=209,
+                                base_color="blue", center=crystalograph._center)
 
-    crystalograph.addLineToDraw(line_type="line", thickness=2, radius=300, begin_angle=0, end_angle=90,
-                                base_color="green", center=crystalograph._center)
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=300, begin_angle=0, end_angle=90,
+                                base_color="blue", center=crystalograph._center)"""
+
+    center_x = 1024/2
+    center_y = 768 / 2
+
+
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=150, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x + 50, center_y))
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=150, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x - 50, center_y))
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=150, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x, center_y-75))
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=200, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x, center_y - 100))
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=250, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x-125, center_y - 100))
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=250, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x - 150, center_y - 100))
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=250, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x - 150, center_y - 200))
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=10, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x - 150, center_y - 100))
+
+    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=600, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x - 150, center_y - 200))
 
     crystalograph.setup()
     while running:
@@ -49,6 +81,6 @@ if __name__ == '__main__':
 
         pygame.display.flip()
         crystalograph.update()
-        clock.tick(np.random.randint(10, 30))
+        clock.tick(20)
 
     pygame.quit()

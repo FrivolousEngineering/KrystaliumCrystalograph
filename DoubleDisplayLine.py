@@ -8,17 +8,17 @@ class DoubleDisplayLine(DisplayLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier = 1):
+    def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1.0, noise_modifier: float = 1.0):
 
         thickness_to_use = thickness_modifier * self._thickness
         pts_top = self.generateCirclePolyLines(self._center, int(self._radius - thickness_to_use / 2), self._begin_angle,
                                                self._end_angle,
-                                               noise=self._noise,
+                                               noise=noise_modifier * self._noise,
                                                smooth_noise=True)
 
         pts_bottom = self.generateCirclePolyLines(self._center, int(self._radius + thickness_to_use / 2), self._begin_angle,
                                                   self._end_angle,
-                                                  noise=self._noise,
+                                                  noise=noise_modifier *self._noise,
                                                   smooth_noise=True)
 
         # Due to winding order, we need to flip the bottom points again
@@ -31,5 +31,11 @@ class DoubleDisplayLine(DisplayLine):
         if override_color is not None:
             color_to_use = self._color_controller.getColor(override_color)
 
-        # Actually draw them
-        return cv2.fillPoly(image, [pts], color_to_use)
+        if alpha < 1.0:
+            overlay = image.copy()
+            cv2.fillPoly(overlay, [pts], color_to_use)
+            image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
+        else:
+            # Actually draw them
+            image = cv2.fillPoly(image, [pts], color_to_use)
+        return image

@@ -4,7 +4,7 @@ import numpy as np
 
 from FlickeringColor import FlickeringColor
 from typing import Tuple, Optional, Dict
-
+import random
 import numpy
 import numpy as np
 import cv2
@@ -33,10 +33,10 @@ class DisplayLine:
     def setColorController(self, color_controler):
         self._color_controller = color_controler
 
-    def draw(self, image, override_color: None = None, alpha = 1.0, thickness_modifier = 1):
+    def draw(self, image, override_color: None = None, alpha = 1.0, thickness_modifier: float = 1, noise_modifier: float = 1.0):
         thickness_to_use = thickness_modifier * self._thickness
 
-        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle, noise=self._noise,
+        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle, noise=noise_modifier*self._noise,
                                            smooth_noise=True)
         pts = pts.reshape((-1, 1, 2))
 
@@ -73,9 +73,10 @@ class DisplayLine:
             pts.append(circle)
 
         pts = np.array(pts, np.int32)
-        noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise, smooth_noise,
-                                                                 int(num_segments / 8))
-        pts = numpy.multiply(pts, noise_multiplier)
+        if noise != 0:
+            noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise, smooth_noise,
+                                                                     int(num_segments / 8))
+            pts = numpy.multiply(pts, noise_multiplier)
 
         # Now ensure that the centre of our curve is set correctly!
         centers = [center] * num_segments
@@ -99,11 +100,11 @@ class DisplayLine:
         noise_multiplier = []
         for segment in range(num_segments):
             # Calculate the noise
-            rand_value = np.random.random()
-            rand = np.sin(segment / 0.7) * rand_value + np.sin(segment / 1.1) * rand_value + np.sin(
+            rand_value = random.random()
+            rand = math.sin(segment / 0.7) * rand_value + math.sin(segment / 1.1) * rand_value + math.sin(
                 segment / 1.5) * rand_value
 
-            noise_multiplier.append(0.5 * rand * noise + 0.5 * noise * np.random.random())
+            noise_multiplier.append(0.5 * rand * noise + 0.5 * noise * random.random())
 
         if smooth_noise:
             noise_multiplier = savgol_filter(noise_multiplier, 5, 1)

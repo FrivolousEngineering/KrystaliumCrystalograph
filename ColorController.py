@@ -12,6 +12,7 @@ class ColorController:
         self._colors["black"] = FlickeringColor(0, 0, 0)
         self._colors["red"] = FlickeringColor(255, 0, 0)
         self._colors["blue"] = FlickeringColor(0, 0, 255)
+        self._colors["light_blue"] = FlickeringColor(173, 216, 230)
         self._colors["green"] = FlickeringColor(0, 255, 0)
         self._colors["yellow"] = FlickeringColor(255, 255, 0)
 

@@ -16,7 +16,7 @@ Image = np.ndarray
 Point = Tuple[int, int]
 Color = Tuple[int, int, int]
 
-NUM_SEGMENTS_PER_LENGTH = 0.5
+NUM_SEGMENTS_PER_LENGTH = 0.4
 
 
 class Crystalograph:
@@ -66,40 +66,18 @@ class Crystalograph:
     def draw(self):
         # Draw all the lines
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image)
+            self._image = line.draw(self._image, thickness_modifier = 2, noise_modifier = 0)
 
         # Some nice blurring
         self.applyBlooming(gausian_ksize=25, blur_ksize=25)
+
         self.applyBlooming()
         for line in self._lines_to_draw:
             self._image = line.draw(self._image)
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, override_color = "white", alpha = 0.5, thickness_modifier = 0.7)
-        self.applyBlooming(3, 3)
-        self.drawTargetLines()
-        return self._image
+            self._image = line.draw(self._image, override_color = "light_blue", alpha = 0.3, thickness_modifier = 0.2, noise_modifier = 1.2)
 
-
-    def drawVisualTest(self) -> Image:
-        # I know it's hella hacky. But suuuusssssh
-        # applyFlickerToColors()
-
-
-        '''self.draw(line_thickness=4, override_color=self._color_controller.getColor("BLUE"))
-        self.applyBlooming(gausian_ksize=25, blur_ksize=25)
-        self.applyBlooming()
-        self.draw(override_color=self._color_controller.getColor("BLUE"))
-        self.applyBlooming()
-        self.draw(override_color=self._color_controller.getColor("white"), line_thickness=1)
-        self.applyBlooming()
-        self.draw(line_thickness=2, override_color=self._color_controller.getColor("BLUE"))
-        self.applyBlooming(gausian_ksize=3, blur_ksize=3)
-        self.draw(line_thickness=1, alpha=0.4, override_color=self._color_controller.getColor("BLUE"))
-        self.draw(override_color=self._color_controller.getColor("white"), line_thickness=1, alpha = 0.4)
-        self.draw(override_color=self._color_controller.getColor("white"), line_thickness=1, alpha= 0.2)
-        self.applyBlooming(gausian_ksize=3, blur_ksize=0)
-
-        self.drawTargetLines()'''
+        self.applyBlooming(0, 3)
         self.drawTargetLines()
         return self._image
 
@@ -118,12 +96,12 @@ if __name__ == '__main__':
     crystalograph.addLineToDraw(line_type="line", thickness=1, radius=150, begin_angle=185, end_angle=209,
                                 base_color="blue", center=crystalograph._center)
     crystalograph.addLineToDraw(line_type="line", thickness=1, radius=200, begin_angle=185, end_angle=209,
-                                base_color="red", center=crystalograph._center)
+                                base_color="blue", center=crystalograph._center)
     crystalograph.addLineToDraw(line_type="line", thickness=1, radius=300, begin_angle=185, end_angle=209,
-                                base_color="red", center=crystalograph._center)
+                                base_color="blue", center=crystalograph._center)
 
     crystalograph.addLineToDraw(line_type="double_line", thickness=1, radius=300, begin_angle=185, end_angle=209,
-                                base_color="red", center=crystalograph._center)
+                                base_color="blue", center=crystalograph._center)
 
     crystalograph.setup()
     img = crystalograph.draw()
