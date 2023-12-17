@@ -49,6 +49,29 @@ class Fader:
             self._alpha = 255
 
 
+class GlitchHandler:
+
+    def __init__(self):
+        self._glitch_counter = 0
+        self._glitch_chance_per_tick = 5 # in percentage
+
+    def update(self):
+
+        if self._glitch_counter > 0:
+            self._glitch_counter -= 1
+        else:
+            percentage_roll = random.random() * 100
+            if percentage_roll < self._glitch_chance_per_tick:
+                self.glitch()
+
+    def glitch(self):
+        self._glitch_counter += random.randint(15, 50)
+
+    def draw(self, screen):
+        if self._glitch_counter:
+            horizontal_glitch(screen, 0.01, 0.08, self._glitch_counter % 3.5)
+
+
 if __name__ == '__main__':
     pygame.init()
     screen_width = 1280
@@ -57,8 +80,8 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
     running = True
     crystalograph = Crystalograph.Crystalograph()
-    frame = 0
-    glitching = 0
+    glitch_handler = GlitchHandler()
+
     crystalograph.createEmptyImage((screen_width, screen_height))
 
     center_x = screen_width/2
@@ -116,34 +139,30 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
                 fader.fadeOut()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
-                screen_shake += 1
+                screen_shake += 40
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_b:
-                glitching += 20
+                glitch_handler.glitch()
 
         if screen_shake:
-            screen_displacement_x = random.randint(0, 8) - 4
-            screen_displacement_y = random.randint(0, 8) - 4
+            screen_displacement_x = random.random() * 4 - 2
+            screen_displacement_y = random.random() * 4 - 2
             screen_shake -= 1
         else:
             screen_displacement_x = 0
             screen_displacement_y = 0
 
-
         fader.update()
+        glitch_handler.update()
 
         # This is where we insert the numpy array.
         # Because pygame and numpy use different coordinate systems,
         # the numpy image has to be flipped and rotated, before being blit.
         img = pygame.surfarray.make_surface(np.fliplr(np.rot90(image, k=-1)))
         screen.blit(img, (screen_displacement_x, screen_displacement_y))
+
         fader.draw(screen)
-
-        if glitching:
-            horizontal_glitch(screen, 0.01, 0.08, glitching % 6)
-            glitching -= 1
-
-        frame += 1
+        glitch_handler.draw(screen)
 
         pygame.display.flip()
         crystalograph.update()
