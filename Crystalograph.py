@@ -75,7 +75,7 @@ class Crystalograph:
         for line in self._lines_to_draw:
             self._image = line.draw(self._image)
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, override_color = "light_blue", alpha = 0.3, thickness_modifier = 0.2, noise_modifier = 1.2)
+            self._image = line.draw(self._image, override_color = "white", thickness_modifier = 0.2, noise_modifier = 1.2)
 
         self.applyBlooming(0, 3)
         self.drawTargetLines()

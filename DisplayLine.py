@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Tuple
 
 import numpy as np
@@ -30,6 +31,9 @@ class DisplayLine:
         self._is_closed = False
         self._color_controller = None
 
+        self._variation_number = 0
+        self._max_variation = 25
+
     def setup(self):
         pass
 
@@ -39,7 +43,7 @@ class DisplayLine:
     def draw(self, image, override_color: None = None, alpha = 1.0, thickness_modifier: float = 1, noise_modifier: float = 1.0):
         thickness_to_use = thickness_modifier * self._thickness
 
-        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle, noise=noise_modifier*self._noisegit )
+        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle, noise=noise_modifier*self._noise )
         pts = pts.reshape((-1, 1, 2))
 
         color_to_use = self._color_controller.getColor(self._color_name)
@@ -58,26 +62,31 @@ class DisplayLine:
 
     def generateCirclePolyLines(self, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *,
                                 noise: float = 0.1):
-        circle_length = (2 * math.pi * radius) * ((end_angle - begin_angle) / 360)
+        circle_length = (2 * np.pi * radius) * ((end_angle - begin_angle) / 360)
         num_segments = int(circle_length * NUM_SEGMENTS_PER_LENGTH)
 
-        begin_angle_rad = math.radians(begin_angle + 180)
-        end_angle_rad = math.radians(end_angle + 180)
+        begin_angle_rad = np.radians(begin_angle + 180)
+        end_angle_rad = np.radians(end_angle + 180)
         total_angle = end_angle_rad - begin_angle_rad
 
         spacing_between_angle = total_angle / (num_segments - 1)
-        pts = []
 
-        for segment in range(num_segments):
-            # Calculate where the circle should be.
-            circle = (-math.sin(segment * spacing_between_angle + begin_angle_rad) * radius,
-                      math.cos(segment * spacing_between_angle + begin_angle_rad) * radius)
-            pts.append(circle)
+        # Calculate where the circle should be using NumPy array operations.
+        segments = np.arange(num_segments)
+        circle_x = -np.sin(segments * spacing_between_angle + begin_angle_rad) * radius
+        circle_y = np.cos(segments * spacing_between_angle + begin_angle_rad) * radius
+
+        # Combine x and y coordinates into a single NumPy array.
+        pts = np.column_stack((circle_x, circle_y))
 
         pts = np.array(pts, np.int32)
         if noise != 0:
             noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise,
-                                                                     int(num_segments / 8))
+                                                                     int(num_segments / 8), self._variation_number)
+            if self._variation_number > self._max_variation:
+                self._variation_number = 0
+            else:
+                self._variation_number += 1
             pts = numpy.multiply(pts, noise_multiplier)
 
         # Now ensure that the centre of our curve is set correctly!
@@ -89,14 +98,16 @@ class DisplayLine:
         return pts
 
     @staticmethod
+    @cache
     def generateNoiseMultiplierForCircle(num_segments: int, noise: float,
-                                         num_cap_segments_limit_noise: int = 0) -> np.array:
+                                         num_cap_segments_limit_noise:int , variation: int) -> np.array:
         """
 
         :param num_segments:
         :param noise:
         :param smooth_noise:
         :param num_cap_segments_limit_noise: On how many of the segments on the begin/end should the noise be limited
+        :param variation: Used to trick the cache into storing multiple options
         :return:
         """
         noise_multiplier = []
