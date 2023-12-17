@@ -32,33 +32,16 @@ if __name__ == '__main__':
     center_x = 1024/2
     center_y = 768 / 2
 
+    # Inner & outer alignment lines
+    crystalograph.addLineToDraw(line_type="line", thickness=1, radius=375, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x, center_y))
+    crystalograph.addLineToDraw(line_type="line", thickness=1, radius=30, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x, center_y))
 
 
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=150, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x + 50, center_y))
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=150, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x - 50, center_y))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-90, end_angle=90,
+                                base_color="blue", center=(center_x, center_y), spikes = [-40, 20])
 
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=150, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x, center_y-75))
-
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=200, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x, center_y - 100))
-
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=250, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x-125, center_y - 100))
-
-    crystalograph.addLineToDraw(line_type="dline", thickness=4, radius=250, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x - 150, center_y - 100))
-
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=250, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x - 150, center_y - 200))
-
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=10, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x - 150, center_y - 100))
-
-    crystalograph.addLineToDraw(line_type="line", thickness=4, radius=600, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x - 150, center_y - 200))
 
     crystalograph.setup()
     while running:

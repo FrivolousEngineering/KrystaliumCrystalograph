@@ -28,7 +28,7 @@ class Crystalograph:
         self._lines_to_draw = []
         self._color_controller = ColorController()
 
-    def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int):
+    def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int, spikes = None):
         data = locals()
         del data["self"]
         if line_type == "line":
@@ -78,7 +78,7 @@ class Crystalograph:
             self._image = line.draw(self._image, override_color = "white", thickness_modifier = 0.2, noise_modifier = 1.2)
 
         self.applyBlooming(0, 3)
-        self.drawTargetLines()
+        #self.drawTargetLines()
         return self._image
 
     def setup(self):

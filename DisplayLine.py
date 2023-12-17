@@ -2,6 +2,7 @@ from functools import cache
 from typing import Tuple
 
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 from FlickeringColor import FlickeringColor
 from typing import Tuple, Optional, Dict
@@ -19,7 +20,7 @@ Color = Tuple[int, int, int]
 
 
 class DisplayLine:
-    def __init__(self, base_color: "str", radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int, line_type: str):
+    def __init__(self, base_color: "str", radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int, line_type: str, spikes):
         self._color_name = base_color
         self._radius: radius = radius
         self._thickness: int = thickness
@@ -30,6 +31,9 @@ class DisplayLine:
         self._noise = 0.08 * (100 / radius)  # normalize the noise
         self._is_closed = False
         self._color_controller = None
+        if spikes is None:
+            spikes = []
+        self._spikes = spikes
 
         self._max_variation = 25
         self._variation_number = random.randint(0, self._max_variation)
@@ -60,6 +64,88 @@ class DisplayLine:
             image = cv2.polylines(image, [pts], self._is_closed, color_to_use, int(thickness_to_use))
         return image
 
+    def generateModifiedRadius(self, num_segments):
+        spike_width = 15 #(angle!)
+        pts = np.empty(num_segments)
+        pts.fill(self._radius)
+
+        # Calculate on what segment the spike needs to be!
+        total_angle_range = abs(self._begin_angle - self._end_angle)
+        angle_per_segment = num_segments / total_angle_range
+
+        for spike_angle in self._spikes:
+            angle_difference = abs(self._begin_angle - spike_angle)
+            segments_difference = angle_difference * angle_per_segment
+            segments_width = int(spike_width * angle_per_segment)
+
+            segments = np.arange(segments_width)
+            segments = numpy.append(segments, numpy.flipud(segments))
+            segments = (segments / (segments_width - 1)) / 5 + 1
+            window = pts[int(segments_difference-segments_width):int(segments_difference+segments_width)]
+            window = numpy.multiply(window, segments)
+            pts[int(segments_difference - segments_width):int(segments_difference + segments_width)] = window
+            #pts[int(segments_difference-segments_width):int(segments_difference+segments_width)] ==   extra_data
+
+        kern_size = 11
+        cutoff_size = int((kern_size - 1) / 2)
+
+        pts = self.smooth(pts, kern_size)
+        return pts[cutoff_size:-cutoff_size]
+
+    @staticmethod
+    def smooth(x, window_len=11, window='blackman'):
+        """smooth the data using a window with requested size.
+
+        This method is based on the convolution of a scaled window with the signal.
+        The signal is prepared by introducing reflected copies of the signal
+        (with the window size) in both ends so that transient parts are minimized
+        in the begining and end part of the output signal.
+
+        input:
+            x: the input signal
+            window_len: the dimension of the smoothing window; should be an odd integer
+            window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+                flat window will produce a moving average smoothing.
+
+        output:
+            the smoothed signal
+
+        example:
+
+        t=linspace(-2,2,0.1)
+        x=sin(t)+randn(len(t))*0.1
+        y=smooth(x)
+
+        see also:
+
+        numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
+        scipy.signal.lfilter
+
+        TODO: the window parameter could be the window itself if an array instead of a string
+        NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
+        """
+
+        if x.ndim != 1:
+            raise ValueError
+
+        if x.size < window_len:
+            raise ValueError
+
+        if window_len < 3:
+            return x
+
+        if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+            raise ValueError
+
+        s = numpy.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
+        if window == 'flat':  # moving average
+            w = numpy.ones(window_len, 'd')
+        else:
+            w = eval('numpy.' + window + '(window_len)')
+
+        y = numpy.convolve(w / w.sum(), s, mode='valid')
+        return y
+
     def generateCirclePolyLines(self, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *,
                                 noise: float = 0.1):
         circle_length = (2 * np.pi * radius) * ((end_angle - begin_angle) / 360)
@@ -71,15 +157,19 @@ class DisplayLine:
 
         spacing_between_angle = total_angle / (num_segments - 1)
 
+        modified_radius = self.generateModifiedRadius(num_segments)
+
         # Calculate where the circle should be using NumPy array operations.
         segments = np.arange(num_segments)
-        circle_x = -np.sin(segments * spacing_between_angle + begin_angle_rad) * radius
-        circle_y = np.cos(segments * spacing_between_angle + begin_angle_rad) * radius
+        circle_x = -np.sin(segments * spacing_between_angle + begin_angle_rad) * modified_radius
+        circle_y = np.cos(segments * spacing_between_angle + begin_angle_rad) * modified_radius
 
         # Combine x and y coordinates into a single NumPy array.
         pts = np.column_stack((circle_x, circle_y))
-
         pts = np.array(pts, np.int32)
+
+        #pts = numpy.multiply(pts, spike_modifier)
+
         if noise != 0:
             noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise,
                                                                      min(int(num_segments / 8), 5), self._variation_number)
