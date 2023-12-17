@@ -84,6 +84,7 @@ class Crystalograph:
     def setup(self):
         for line in self._lines_to_draw:
             line.setColorController(self._color_controller)
+            line.setup()
 
     def update(self):
         self._color_controller.update()

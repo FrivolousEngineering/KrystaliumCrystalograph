@@ -30,6 +30,10 @@ class DisplayLine:
         self._is_closed = False
         self._color_controller = None
 
+
+    def setup(self):
+        pass
+
     def setColorController(self, color_controler):
         self._color_controller = color_controler
 
