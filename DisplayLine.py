@@ -82,7 +82,7 @@ class DisplayLine:
         pts = np.array(pts, np.int32)
         if noise != 0:
             noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise,
-                                                                     int(num_segments / 8), self._variation_number)
+                                                                     min(int(num_segments / 8), 5), self._variation_number)
             if self._variation_number > self._max_variation:
                 self._variation_number = 0
             else:
