@@ -30,7 +30,6 @@ class DisplayLine:
         self._is_closed = False
         self._color_controller = None
 
-
     def setup(self):
         pass
 
@@ -40,8 +39,7 @@ class DisplayLine:
     def draw(self, image, override_color: None = None, alpha = 1.0, thickness_modifier: float = 1, noise_modifier: float = 1.0):
         thickness_to_use = thickness_modifier * self._thickness
 
-        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle, noise=noise_modifier*self._noise,
-                                           smooth_noise=True)
+        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle, noise=noise_modifier*self._noisegit )
         pts = pts.reshape((-1, 1, 2))
 
         color_to_use = self._color_controller.getColor(self._color_name)
@@ -59,7 +57,7 @@ class DisplayLine:
         return image
 
     def generateCirclePolyLines(self, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *,
-                                noise: float = 0.1, smooth_noise: bool = True):
+                                noise: float = 0.1):
         circle_length = (2 * math.pi * radius) * ((end_angle - begin_angle) / 360)
         num_segments = int(circle_length * NUM_SEGMENTS_PER_LENGTH)
 
@@ -78,7 +76,7 @@ class DisplayLine:
 
         pts = np.array(pts, np.int32)
         if noise != 0:
-            noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise, smooth_noise,
+            noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise,
                                                                      int(num_segments / 8))
             pts = numpy.multiply(pts, noise_multiplier)
 
@@ -91,7 +89,7 @@ class DisplayLine:
         return pts
 
     @staticmethod
-    def generateNoiseMultiplierForCircle(num_segments: int, noise: float, smooth_noise: bool,
+    def generateNoiseMultiplierForCircle(num_segments: int, noise: float,
                                          num_cap_segments_limit_noise: int = 0) -> np.array:
         """
 
@@ -110,10 +108,7 @@ class DisplayLine:
 
             noise_multiplier.append(0.5 * rand * noise + 0.5 * noise * random.random())
 
-        if smooth_noise:
-            noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
-        else:
-            noise_multiplier = np.array(noise_multiplier)
+        noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
 
         # Apply a linear scale to the begin & end segments
         if num_cap_segments_limit_noise > 0:

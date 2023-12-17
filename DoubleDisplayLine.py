@@ -8,18 +8,19 @@ class DoubleDisplayLine(DisplayLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def setup(self):
+        pass
+
     def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1.0, noise_modifier: float = 1.0):
 
         thickness_to_use = thickness_modifier * self._thickness
         pts_top = self.generateCirclePolyLines(self._center, int(self._radius - thickness_to_use / 2), self._begin_angle,
                                                self._end_angle,
-                                               noise=noise_modifier * self._noise,
-                                               smooth_noise=True)
+                                               noise=noise_modifier * self._noise,)
 
         pts_bottom = self.generateCirclePolyLines(self._center, int(self._radius + thickness_to_use / 2), self._begin_angle,
                                                   self._end_angle,
-                                                  noise=noise_modifier *self._noise,
-                                                  smooth_noise=True)
+                                                  noise=noise_modifier * self._noise)
 
         # Due to winding order, we need to flip the bottom points again
         pts_bottom = numpy.flipud(pts_bottom)
