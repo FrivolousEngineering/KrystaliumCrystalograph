@@ -10,42 +10,51 @@ import numpy as np
 import Crystalograph
 
 
-
 if __name__ == '__main__':
     pygame.init()
-    screen = pygame.display.set_mode((1024, 768))
+    screen_width = 1280
+    screen_height = 720
+    screen = pygame.display.set_mode((screen_width, screen_height))
     clock = pygame.time.Clock()
     running = True
     crystalograph = Crystalograph.Crystalograph()
-    crystalograph.createEmptyImage((1024, 768))
 
-    """crystalograph.addLineToDraw(line_type="double_line", thickness=2, radius=150, begin_angle=185, end_angle=209,
-                                base_color="blue", center=crystalograph._center)
-    crystalograph.addLineToDraw(line_type="double_line", thickness=2, radius=200, begin_angle=185, end_angle=209,
-                                base_color="blue", center=crystalograph._center)
-    crystalograph.addLineToDraw(line_type="double_line", thickness=2, radius=300, begin_angle=185, end_angle=209,
-                                base_color="blue", center=crystalograph._center)
+    crystalograph.createEmptyImage((screen_width, screen_height))
 
-    crystalograph.addLineToDraw(line_type="double_line", thickness=4, radius=300, begin_angle=0, end_angle=90,
-                                base_color="blue", center=crystalograph._center)"""
-
-    center_x = 1024/2
-    center_y = 768 / 2
+    center_x = screen_width/2
+    center_y = screen_height / 2
 
     # Inner & outer alignment lines
-    crystalograph.addLineToDraw(line_type="line", thickness=1, radius=375, begin_angle=0, end_angle=360,
+    crystalograph.addLineToDraw(line_type="line", thickness=1, radius=350, begin_angle=0, end_angle=360,
                                 base_color="blue", center=(center_x, center_y))
     crystalograph.addLineToDraw(line_type="line", thickness=1, radius=30, begin_angle=0, end_angle=360,
                                 base_color="blue", center=(center_x, center_y))
 
+    # Inner
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=75, begin_angle=0, end_angle=360,
+                                base_color="blue", center=(center_x, center_y),
+                                spikes=[(60, 20, 0.2),
+                                        (120, 5, 0.2),
+                                        (300, 25, 0.2)])
 
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-90, end_angle=90,
-                                base_color="blue", center=(center_x, center_y), spikes = [-40, 20])
+    #Middle
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
+                                base_color="red", center=(center_x, center_y),
+                                spikes = [(60, 20, 0.2),
+                                          (10, 5, 0.2),
+                                          (300, 25, 0.2)])
 
+    #Outer
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
+                                base_color="gree", center=(center_x, center_y),
+                                spikes=[(80, 25, 0.15),
+                                        (120, 5, 0.2),
+                                        (150, 5, 0.15),
+                                        (270, 25, 0.2)])
 
     crystalograph.setup()
     while running:
-        crystalograph.createEmptyImage((1024, 768))
+        crystalograph.createEmptyImage((screen_width, screen_height))
         image = crystalograph.draw()
         screen.fill((0, 0, 0))
         for event in pygame.event.get():
@@ -55,6 +64,10 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                # Toggle fullscreen mode
+                pygame.display.toggle_fullscreen()
 
         # This is where we insert the numpy array.
         # Because pygame and numpy use different coordinate systems,

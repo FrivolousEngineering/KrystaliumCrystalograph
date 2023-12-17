@@ -65,7 +65,6 @@ class DisplayLine:
         return image
 
     def generateModifiedRadius(self, num_segments):
-        spike_width = 15 #(angle!)
         pts = np.empty(num_segments)
         pts.fill(self._radius)
 
@@ -73,14 +72,14 @@ class DisplayLine:
         total_angle_range = abs(self._begin_angle - self._end_angle)
         angle_per_segment = num_segments / total_angle_range
 
-        for spike_angle in self._spikes:
+        for spike_angle, spike_width, intensity in self._spikes:
             angle_difference = abs(self._begin_angle - spike_angle)
             segments_difference = angle_difference * angle_per_segment
             segments_width = int(spike_width * angle_per_segment)
 
             segments = np.arange(segments_width)
             segments = numpy.append(segments, numpy.flipud(segments))
-            segments = (segments / (segments_width - 1)) / 5 + 1
+            segments = (segments / (segments_width - 1)) * intensity + 1
             window = pts[int(segments_difference-segments_width):int(segments_difference+segments_width)]
             window = numpy.multiply(window, segments)
             pts[int(segments_difference - segments_width):int(segments_difference + segments_width)] = window
@@ -90,6 +89,7 @@ class DisplayLine:
         cutoff_size = int((kern_size - 1) / 2)
 
         pts = self.smooth(pts, kern_size)
+        pts = self.smooth(pts[cutoff_size:-cutoff_size], kern_size)
         return pts[cutoff_size:-cutoff_size]
 
     @staticmethod
