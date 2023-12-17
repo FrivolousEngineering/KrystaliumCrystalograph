@@ -7,6 +7,9 @@ from typing import Tuple
 with contextlib.redirect_stdout(None):
     import pygame
 
+import PygameShader
+from PygameShader.shader import horizontal_glitch
+
 import numpy as np
 import Crystalograph
 
@@ -54,7 +57,8 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
     running = True
     crystalograph = Crystalograph.Crystalograph()
-
+    frame = 0
+    glitching = 0
     crystalograph.createEmptyImage((screen_width, screen_height))
 
     center_x = screen_width/2
@@ -114,6 +118,9 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
                 screen_shake += 1
 
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_b:
+                glitching += 20
+
         if screen_shake:
             screen_displacement_x = random.randint(0, 8) - 4
             screen_displacement_y = random.randint(0, 8) - 4
@@ -131,6 +138,13 @@ if __name__ == '__main__':
         img = pygame.surfarray.make_surface(np.fliplr(np.rot90(image, k=-1)))
         screen.blit(img, (screen_displacement_x, screen_displacement_y))
         fader.draw(screen)
+
+        if glitching:
+            horizontal_glitch(screen, 0.01, 0.08, glitching % 6)
+            glitching -= 1
+
+        frame += 1
+
         pygame.display.flip()
         crystalograph.update()
         clock.tick()
