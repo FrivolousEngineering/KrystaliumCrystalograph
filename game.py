@@ -82,6 +82,6 @@ if __name__ == '__main__':
         pygame.display.flip()
         crystalograph.update()
         clock.tick()
-        print(clock.get_fps())
+        #print(clock.get_fps())
 
     pygame.quit()

@@ -31,8 +31,8 @@ class DisplayLine:
         self._is_closed = False
         self._color_controller = None
 
-        self._variation_number = 0
         self._max_variation = 25
+        self._variation_number = random.randint(0, self._max_variation)
 
     def setup(self):
         pass
@@ -118,7 +118,8 @@ class DisplayLine:
             cap_limit_per_step = 1 / num_cap_segments_limit_noise
             limit_segments = np.arange(num_cap_segments_limit_noise)
             noise_multiplier[:num_cap_segments_limit_noise] *= limit_segments * cap_limit_per_step
-            noise_multiplier[-num_cap_segments_limit_noise:] *= limit_segments * cap_limit_per_step
+            # Flip the points as we're working from different direction here
+            noise_multiplier[-num_cap_segments_limit_noise:] *= numpy.flipud(limit_segments) * cap_limit_per_step
 
         # Add 1 to all segments using vectorized operations
         noise_multiplier += 1
