@@ -100,40 +100,30 @@ class DisplayLine:
     @staticmethod
     @cache
     def generateNoiseMultiplierForCircle(num_segments: int, noise: float,
-                                         num_cap_segments_limit_noise:int , variation: int) -> np.array:
-        """
+                                         num_cap_segments_limit_noise: int, variation: int) -> np.array:
+        # Generate random values for all segments at once
+        rand_values = np.random.random(num_segments)
 
-        :param num_segments:
-        :param noise:
-        :param smooth_noise:
-        :param num_cap_segments_limit_noise: On how many of the segments on the begin/end should the noise be limited
-        :param variation: Used to trick the cache into storing multiple options
-        :return:
-        """
-        noise_multiplier = []
-        for segment in range(num_segments):
-            # Calculate the noise
-            rand_value = random.random()
-            rand = math.sin(segment / 0.7) * rand_value + math.sin(segment / 1.1) * rand_value + math.sin(
-                segment / 1.5) * rand_value
+        # Calculate the noise using vectorized operations
+        segments = np.arange(num_segments)
+        rand = np.sin(segments / 0.7) * rand_values + np.sin(segments / 1.1) * rand_values + np.sin(
+            segments / 1.5) * rand_values
+        noise_multiplier = 0.5 * rand * noise + 0.5 * noise * np.random.random(num_segments)
 
-            noise_multiplier.append(0.5 * rand * noise + 0.5 * noise * random.random())
-
+        # Apply Savitzky-Golay filter for smoothing
         noise_multiplier = savgol_filter(noise_multiplier, 5, 1)
 
-        # Apply a linear scale to the begin & end segments
+        # Apply a linear scale to the begin & end segments using vectorized operations
         if num_cap_segments_limit_noise > 0:
             cap_limit_per_step = 1 / num_cap_segments_limit_noise
-            for limit_segment in range(num_cap_segments_limit_noise):
-                noise_multiplier[limit_segment] *= limit_segment * cap_limit_per_step
+            limit_segments = np.arange(num_cap_segments_limit_noise)
+            noise_multiplier[:num_cap_segments_limit_noise] *= limit_segments * cap_limit_per_step
+            noise_multiplier[-num_cap_segments_limit_noise:] *= limit_segments * cap_limit_per_step
 
-                noise_multiplier[-(limit_segment + 1)] *= limit_segment * cap_limit_per_step
+        # Add 1 to all segments using vectorized operations
+        noise_multiplier += 1
 
-        for segment in range(num_segments):
-            noise_multiplier[segment] += 1
-
-        # Since want to offset the signal from the center, we need to rescale the 1d vector to 2d (so copy the column
-        # to a second column)
-        noise_multiplier = np.repeat(noise_multiplier[:, np.newaxis], 2, 1)
+        # Reshape the 1D vector to a 2D array with two columns
+        noise_multiplier = np.repeat(noise_multiplier[:, np.newaxis], 2, axis=1)
 
         return noise_multiplier
