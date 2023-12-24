@@ -67,6 +67,13 @@ class GlitchHandler:
             horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 3.5)
 
 
+def generateAngles(spacing, angle_width):
+    num_angles = int(360 / spacing)
+    result = []
+    for i in range(num_angles):
+        result.append((i * spacing, angle_width))
+    return result
+
 if __name__ == '__main__':
     pygame.init()
     screen_width = 1280
@@ -98,7 +105,7 @@ if __name__ == '__main__':
     # Middle
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y),
-                                mask=[(0, 5), (10, 5), (15,5) ])
+                                mask=generateAngles(15, 5))
 
     # Outer
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
