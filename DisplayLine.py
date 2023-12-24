@@ -40,10 +40,13 @@ class DisplayLine:
         self._radius: radius = radius
         self._thickness: int = thickness
         self._center: Point = center
-        self._begin_angle: int  = begin_angle
+        self._begin_angle: int = begin_angle
         self._end_angle: int = end_angle
 
         self._noise = 0.08 * (100 / radius)  # normalize the noise
+
+        self._angle_noise = 2
+
         self._is_closed = False
         self._color_controller = None
         if spikes is None:
@@ -73,6 +76,10 @@ class DisplayLine:
     def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1,
              noise_modifier: float = 1.0):
         thickness_to_use = thickness_modifier * self._thickness
+
+        if self._angle_noise:
+            # Re-create the mask if you want noise on the angle, otherwise just keep the default
+            self._mask_array = self._generateMask()
 
         pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle,
                                            noise=noise_modifier * self._noise)
@@ -130,10 +137,11 @@ class DisplayLine:
         for mask_angle, mask_width in self._mask:
             angle_difference = self._angleClamp(mask_angle - absolute_begin_angle)
             segments_difference = angle_difference * angle_per_segment
-            segments_width = int(mask_width * angle_per_segment)
 
-            start = int(segments_difference - segments_width / 2)
-            end = int(segments_difference + segments_width / 2)
+            segments_width_begin = int((mask_width + self._angle_noise * (random.random() - 0.5)) * angle_per_segment)
+            segments_width_end = int((mask_width + self._angle_noise * (random.random() - 0.5)) * angle_per_segment)
+            start = int(segments_difference - segments_width_begin / 2)
+            end = int(segments_difference + segments_width_end / 2)
 
             # We need to do it like this to ensure that wrapping (eg; setting angle of 0) will work.
             if start < 0:
