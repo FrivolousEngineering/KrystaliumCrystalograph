@@ -1,13 +1,10 @@
 import contextlib
-import math
 import random
-from typing import Tuple
 
 # This suppresses the `Hello from pygame` message.
 with contextlib.redirect_stdout(None):
     import pygame
 
-import PygameShader
 from PygameShader.shader import horizontal_glitch
 
 import numpy as np
@@ -17,7 +14,7 @@ import Crystalograph
 class Fader:
     def __init__(self):
         self._fading = "in"
-        self._alpha = 255
+        self._alpha = 0
         sr = pygame.display.get_surface().get_rect()
         self._veil = pygame.Surface(sr.size)
         self._veil.fill((0, 0, 0))
@@ -101,10 +98,7 @@ if __name__ == '__main__':
     # Middle
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y),
-                                spikes=[(60, 20, 0.2),
-                                        (10, 5, 0.2),
-                                        (300, 25, 0.2)],
-                                mask = [5,11,12,13,14,16,17,20,21,22,23,24, 250,251,252,253,254,255])
+                                mask=[5, 11, 12, 13, 14, 16, 17, 20, 21, 22, 23, 24, 250, 251, 252, 253, 254, 255])
 
     # Outer
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,

@@ -1,4 +1,3 @@
-
 from typing import Tuple, Dict
 
 from FlickeringColor import FlickeringColor

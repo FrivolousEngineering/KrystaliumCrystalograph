@@ -66,7 +66,6 @@ class FlickeringColor:
         h, s, v = self.getOriginalHSV()
         self.setByHSV(h, s, intensity)
 
-
     @staticmethod
     def roundToInt(n) -> int:
         return math.floor(n + 0.5)
@@ -81,7 +80,8 @@ class FlickeringColor:
                 self._flicker_start = current_time
                 self._intensity_start = self._intensity_end
 
-                if self._intensity_start > self._absolute_min_intensity and random.randint(0, 100) < self._drop_bottom_chance_percent:
+                if self._intensity_start > self._absolute_min_intensity and random.randint(0,
+                                                                                           100) < self._drop_bottom_chance_percent:
                     # Drop to a value between the absolute min and the min intensity
                     self._intensity_end = random.randint(self._absolute_min_intensity, self._min_intensity)
                 else:
@@ -92,11 +92,14 @@ class FlickeringColor:
                 self._flicker_msecs = random.randint(self._up_min_msecs, self._up_max_msecs)
                 self._flicker_start = current_time
                 self._intensity_start = self._intensity_end
-                self._intensity_end = random.randint(0, max(self._max_intensity - self._intensity_start, 0)) + self._min_intensity
+                self._intensity_end = random.randint(0, max(self._max_intensity - self._intensity_start,
+                                                            0)) + self._min_intensity
                 self._flicker_state = FlickerState.UP
             case FlickerState.DOWN | FlickerState.UP:
                 if current_time < self._flicker_start + self._flicker_msecs:
-                    self.setFlicker(self.roundToInt(self._intensity_start + ((self._intensity_end - self._intensity_start) * (((current_time - self._flicker_start) * 1.0) / self._flicker_msecs))))
+                    self.setFlicker(self.roundToInt(self._intensity_start + (
+                                (self._intensity_end - self._intensity_start) * (
+                                    ((current_time - self._flicker_start) * 1.0) / self._flicker_msecs))))
                 else:
                     self.setFlicker(self._intensity_end)
                     if self._flicker_state == FlickerState.DOWN:
@@ -109,7 +112,8 @@ class FlickeringColor:
                     else:  # Flickerstate is UP
                         if random.randint(0, 100) < self._bright_hold_chance_percent:
                             self._flicker_start = current_time
-                            self._flicker_msecs = random.randint(self._bright_hold_min_msecs, self._bright_hold_max_msecs)
+                            self._flicker_msecs = random.randint(self._bright_hold_min_msecs,
+                                                                 self._bright_hold_max_msecs)
                             self._flicker_state = FlickerState.BRIGHT_HOLD
                         else:
                             self._flicker_state = FlickerState.BRIGHT
@@ -134,9 +138,9 @@ class FlickeringColor:
     def setByHSV(self, h, s, v):
 
         new_rgb = cv2.cvtColor(np.uint8([[(h, s, v)]]), cv2.COLOR_HSV2RGB)
-        #print(type(new_rgb[0][0][0]))
+        # print(type(new_rgb[0][0][0]))
         self._r = int(new_rgb[0][0][0])
         self._g = int(new_rgb[0][0][1])
         self._b = int(new_rgb[0][0][2])
-        #BLUE = (int(blue_rgb[0][0][0] + 0.5), int(blue_rgb[0][0][1] + 0.5), int(blue_rgb[0][0][2] + 0.5))
+        # BLUE = (int(blue_rgb[0][0][0] + 0.5), int(blue_rgb[0][0][1] + 0.5), int(blue_rgb[0][0][2] + 0.5))
         pass

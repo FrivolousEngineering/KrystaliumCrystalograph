@@ -1,17 +1,12 @@
 from functools import cache
-from typing import Tuple, List, NamedTuple
-
-import numpy as np
-from scipy.ndimage import gaussian_filter
+from typing import List, NamedTuple
 
 from ColorController import ColorController
-from FlickeringColor import FlickeringColor
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional
 import random
 import numpy
 import numpy as np
 import cv2
-import math
 from scipy.signal import savgol_filter
 
 NUM_SEGMENTS_PER_LENGTH = 0.5
