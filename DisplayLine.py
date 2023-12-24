@@ -151,9 +151,9 @@ class DisplayLine:
                 mask[start: end] = True
         return pts[mask]
 
-    def generateModifiedRadius(self) -> np.ndarray:
+    def generateModifiedRadius(self, radius: int) -> np.ndarray:
         pts = np.empty(self._num_segments)
-        pts.fill(self._radius)
+        pts.fill(radius)
 
         # Calculate on what segment the spike needs to be!
         total_angle_range = abs(self._begin_angle - self._end_angle)
@@ -246,7 +246,7 @@ class DisplayLine:
 
         spacing_between_angle = total_angle / (self._num_segments - 1)
 
-        modified_radius = self.generateModifiedRadius()
+        modified_radius = self.generateModifiedRadius(radius)
         # Calculate where the circle should be using NumPy array operations.
         segments = np.arange(self._num_segments)
         circle_x = -np.sin(segments * spacing_between_angle + begin_angle_rad) * modified_radius
