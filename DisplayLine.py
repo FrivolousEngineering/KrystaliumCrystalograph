@@ -27,6 +27,18 @@ Spike = NamedTuple("Spike", [("angle", int),
 class DisplayLine:
     def __init__(self, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int,
                  line_type: str, spikes: Optional[List[Spike]] = None, mask: Optional[List] = None) -> None:
+        """
+        :param base_color: The main color of the line to be drawn
+        :param radius: All the lines that we drawn are circles, so this indicates the radius from the center.
+        :param thickness: How thick is the line
+        :param center: Center of the circle to be drawn
+        :param begin_angle: Used for drawing partial circles; angle in deg to start drawing with 0 being up.
+        :param end_angle: Used for drawing partial circles; angle in deg to stop drawing with 0 being up.
+        :param line_type:
+        :param spikes: Should there be spikes on the circle. You can define the angle (of the center), width (in deg)
+                        and intensity (1 being; double the signal)
+        :param mask: What parts of the circle should be filtered out.
+        """
         self._color_name = base_color
         self._radius: radius = radius
         self._thickness: int = thickness
