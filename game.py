@@ -91,7 +91,7 @@ if __name__ == '__main__':
     # Inner
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=75, begin_angle=0, end_angle=360,
                                 base_color="blue", center=(center_x, center_y),
-                                spikes=[(60, 20, 0.2),
+                                spikes=[(60.5, 20.5, 0.2),
                                         (120, 5, 0.2),
                                         (300, 25, 0.2)])
 

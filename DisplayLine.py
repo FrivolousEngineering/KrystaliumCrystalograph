@@ -14,9 +14,11 @@ Image = np.ndarray
 Point = Tuple[int, int]
 Color = Tuple[int, int, int]
 
-Spike = NamedTuple("Spike", [("angle", int),
-                             ("width", int),
+Spike = NamedTuple("Spike", [("angle", float),
+                             ("width", float),
                              ("intensity", float)])
+
+Mask = NamedTuple("Mask", [("angle", float), ("width", float)])
 
 
 class DisplayLine:
@@ -54,6 +56,7 @@ class DisplayLine:
 
         self._max_variation = 25
         self._variation_number = random.randint(0, self._max_variation)
+        self._num_segments = self._calculateNumSegments(self._radius, begin_angle, end_angle)
 
     def setup(self) -> None:
         pass
@@ -62,7 +65,7 @@ class DisplayLine:
         self._color_controller = color_controller
 
     @staticmethod
-    def _maskArray(input_array, mask_indices):
+    def _maskArray(input_array, mask_indices) -> np.ndarray:
         mask = np.zeros_like(input_array, dtype=bool)
         mask[mask_indices] = True
         return np.ma.array(input_array, mask=mask)
@@ -97,13 +100,21 @@ class DisplayLine:
                 image = cv2.polylines(image, [set_of_points], self._is_closed, color_to_use, int(thickness_to_use))
         return image
 
-    def generateModifiedRadius(self, num_segments):
-        pts = np.empty(num_segments)
+    def _generateMask(self, masks) -> np.ndarray:
+        """
+        Converts angle & widths into array of indexes to be masked
+        :param masks:
+        :return: The indexes to be masked
+        """
+        pass
+
+    def generateModifiedRadius(self) -> np.ndarray:
+        pts = np.empty(self._num_segments)
         pts.fill(self._radius)
 
         # Calculate on what segment the spike needs to be!
         total_angle_range = abs(self._begin_angle - self._end_angle)
-        angle_per_segment = num_segments / total_angle_range
+        angle_per_segment = self._num_segments / total_angle_range
 
         for spike_angle, spike_width, intensity in self._spikes:
             angle_difference = abs(self._begin_angle - spike_angle)
@@ -123,6 +134,11 @@ class DisplayLine:
         pts = self.smooth(pts, kern_size)
         pts = self.smooth(pts[cutoff_size:-cutoff_size], kern_size)
         return pts[cutoff_size:-cutoff_size]
+
+    @staticmethod
+    def _calculateNumSegments(radius: int, end_angle: int, begin_angle: int) -> int:
+        circle_length = (2 * np.pi * radius) * ((end_angle - begin_angle) / 360)
+        return abs(int(circle_length * NUM_SEGMENTS_PER_LENGTH))
 
     @staticmethod
     def smooth(x, window_len=11, window='blackman'):
@@ -180,19 +196,16 @@ class DisplayLine:
 
     def generateCirclePolyLines(self, center: Point, radius: int, begin_angle: int = 0, end_angle: int = 90, *,
                                 noise: float = 0.1):
-        circle_length = (2 * np.pi * radius) * ((end_angle - begin_angle) / 360)
-        num_segments = int(circle_length * NUM_SEGMENTS_PER_LENGTH)
-
         begin_angle_rad = np.radians(begin_angle + 180)
         end_angle_rad = np.radians(end_angle + 180)
         total_angle = end_angle_rad - begin_angle_rad
 
-        spacing_between_angle = total_angle / (num_segments - 1)
+        spacing_between_angle = total_angle / (self._num_segments - 1)
 
-        modified_radius = self.generateModifiedRadius(num_segments)
+        modified_radius = self.generateModifiedRadius()
 
         # Calculate where the circle should be using NumPy array operations.
-        segments = np.arange(num_segments)
+        segments = np.arange(self._num_segments)
         circle_x = -np.sin(segments * spacing_between_angle + begin_angle_rad) * modified_radius
         circle_y = np.cos(segments * spacing_between_angle + begin_angle_rad) * modified_radius
 
@@ -201,8 +214,8 @@ class DisplayLine:
         pts = np.array(pts, np.int32)
 
         if noise != 0:
-            noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise,
-                                                                     min(int(num_segments / 8), 5),
+            noise_multiplier = self.generateNoiseMultiplierForCircle(self._num_segments, noise,
+                                                                     min(int(self._num_segments / 8), 5),
                                                                      self._variation_number)
             if self._variation_number > self._max_variation:
                 self._variation_number = 0
@@ -211,7 +224,7 @@ class DisplayLine:
             pts = numpy.multiply(pts, noise_multiplier)
 
         # Now ensure that the centre of our curve is set correctly!
-        centers = [center] * num_segments
+        centers = [center] * self._num_segments
         pts = numpy.add(centers, pts)
 
         # Force the results to be int, else we can't draw em
