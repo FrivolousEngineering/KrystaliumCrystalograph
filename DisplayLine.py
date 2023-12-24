@@ -74,7 +74,7 @@ class DisplayLine:
         return np.ma.array(input_array, mask=mask)
 
     def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1,
-             noise_modifier: float = 1.0):
+             noise_modifier: float = 1.0, disable_mask: bool = False):
         thickness_to_use = thickness_modifier * self._thickness
 
         if self._angle_noise:
@@ -83,7 +83,7 @@ class DisplayLine:
 
         pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle,
                                            noise=noise_modifier * self._noise)
-        if self._mask:
+        if self._mask and not disable_mask:
             masked_array = self._maskArray(pts, self._mask_array)
             segments = np.ma.clump_unmasked(masked_array)
             # We need to flatten the array, because clump_unmask doesn't work on anything but 1d arrays.

@@ -62,16 +62,18 @@ class Crystalograph:
     def draw(self) -> np.ndarray:
         # Draw all the lines
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, thickness_modifier=2, noise_modifier=0)
+            self._image = line.draw(self._image, thickness_modifier=2, noise_modifier=0, override_color="pale_" + line._color_name)
 
         # Some nice blurring
         self.applyBlooming(gaussian_ksize=25, blur_ksize=25)
 
-        self.applyBlooming()
+        # Draw the lines again so that there is a difference between the blur and the line itself
         for line in self._lines_to_draw:
             self._image = line.draw(self._image)
+
+        # Draw a white line over it for the highlight
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, override_color="white", thickness_modifier=0.2, noise_modifier=1.2)
+            self._image = line.draw(self._image, override_color="white", thickness_modifier=0.1, noise_modifier=1.2)
 
         self.applyBlooming(0, 3)
         # self.drawTargetLines()

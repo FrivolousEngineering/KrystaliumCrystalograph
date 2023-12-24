@@ -12,7 +12,7 @@ class DoubleDisplayLine(DisplayLine):
     def setup(self):
         pass
 
-    def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1.0, noise_modifier: float = 1.0):
+    def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1.0, noise_modifier: float = 1.0, disable_mask: bool = False):
 
         thickness_to_use = thickness_modifier * self._thickness
         pts_top = self.generateCirclePolyLines(self._center, int(self._radius - thickness_to_use / 2), self._begin_angle,
@@ -27,7 +27,7 @@ class DoubleDisplayLine(DisplayLine):
             # Re-create the mask if you want noise on the angle, otherwise just keep the default
             self._mask_array = self._generateMask()
 
-        if self._mask:
+        if self._mask and not disable_mask:
             masked_bottom_array = self._maskArray(pts_bottom, self._mask_array)
             masked_top_array = self._maskArray(pts_top, self._mask_array)
 
