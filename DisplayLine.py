@@ -40,12 +40,9 @@ class DisplayLine:
         self._radius: radius = radius
         self._thickness: int = thickness
         self._center: Point = center
-        self._begin_angle: int = self._angleClamp(begin_angle)
-        self._end_angle: int = self._angleClamp(end_angle)
-        if self._begin_angle > begin_angle:
-            self._end_angle += 360
-            self._end_angle: int = self._angleClamp(self._end_angle)
-        self.line_type = line_type
+        self._begin_angle: int  = begin_angle
+        self._end_angle: int = end_angle
+
         self._noise = 0.08 * (100 / radius)  # normalize the noise
         self._is_closed = False
         self._color_controller = None
@@ -129,11 +126,9 @@ class DisplayLine:
         # Calculate on what segment the masks needs to be!
         total_angle_range = abs(self._begin_angle - self._end_angle)
         angle_per_segment = self._num_segments / total_angle_range
-
+        absolute_begin_angle = self._angleClamp(self._begin_angle)
         for mask_angle, mask_width in self._mask:
-            if mask_angle > self._end_angle or mask_angle < self._begin_angle:
-                continue
-            angle_difference = mask_angle - self._begin_angle
+            angle_difference = self._angleClamp(mask_angle - absolute_begin_angle)
             segments_difference = angle_difference * angle_per_segment
             segments_width = int(mask_width * angle_per_segment)
 
