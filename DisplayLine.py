@@ -20,7 +20,8 @@ Color = Tuple[int, int, int]
 
 
 class DisplayLine:
-    def __init__(self, base_color: "str", radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int, line_type: str, spikes):
+    def __init__(self, base_color: "str", radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int,
+                 line_type: str, spikes):
         self._color_name = base_color
         self._radius: radius = radius
         self._thickness: int = thickness
@@ -44,10 +45,12 @@ class DisplayLine:
     def setColorController(self, color_controler):
         self._color_controller = color_controler
 
-    def draw(self, image, override_color: None = None, alpha = 1.0, thickness_modifier: float = 1, noise_modifier: float = 1.0):
+    def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1,
+             noise_modifier: float = 1.0):
         thickness_to_use = thickness_modifier * self._thickness
 
-        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle, noise=noise_modifier*self._noise )
+        pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle,
+                                           noise=noise_modifier * self._noise)
         pts = pts.reshape((-1, 1, 2))
 
         color_to_use = self._color_controller.getColor(self._color_name)
@@ -80,10 +83,9 @@ class DisplayLine:
             segments = np.arange(segments_width)
             segments = numpy.append(segments, numpy.flipud(segments))
             segments = (segments / (segments_width - 1)) * intensity + 1
-            window = pts[int(segments_difference-segments_width):int(segments_difference+segments_width)]
+            window = pts[int(segments_difference - segments_width):int(segments_difference + segments_width)]
             window = numpy.multiply(window, segments)
             pts[int(segments_difference - segments_width):int(segments_difference + segments_width)] = window
-            #pts[int(segments_difference-segments_width):int(segments_difference+segments_width)] ==   extra_data
 
         kern_size = 11
         cutoff_size = int((kern_size - 1) / 2)
@@ -168,11 +170,10 @@ class DisplayLine:
         pts = np.column_stack((circle_x, circle_y))
         pts = np.array(pts, np.int32)
 
-        #pts = numpy.multiply(pts, spike_modifier)
-
         if noise != 0:
             noise_multiplier = self.generateNoiseMultiplierForCircle(num_segments, noise,
-                                                                     min(int(num_segments / 8), 5), self._variation_number)
+                                                                     min(int(num_segments / 8), 5),
+                                                                     self._variation_number)
             if self._variation_number > self._max_variation:
                 self._variation_number = 0
             else:
