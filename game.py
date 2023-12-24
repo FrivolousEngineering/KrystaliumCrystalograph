@@ -50,13 +50,11 @@ class Fader:
 
 
 class GlitchHandler:
-
-    def __init__(self):
+    def __init__(self) -> None:
         self._glitch_counter = 0
-        self._glitch_chance_per_tick = 5 # in percentage
+        self._glitch_chance_per_tick = 5  # in percentage
 
-    def update(self):
-
+    def update(self) -> None:
         if self._glitch_counter > 0:
             self._glitch_counter -= 1
         else:
@@ -64,12 +62,12 @@ class GlitchHandler:
             if percentage_roll < self._glitch_chance_per_tick:
                 self.glitch()
 
-    def glitch(self):
+    def glitch(self) -> None:
         self._glitch_counter += random.randint(15, 50)
 
-    def draw(self, screen):
+    def draw(self, _screen) -> None:
         if self._glitch_counter:
-            horizontal_glitch(screen, 0.01, 0.08, self._glitch_counter % 3.5)
+            horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 3.5)
 
 
 if __name__ == '__main__':
@@ -84,8 +82,8 @@ if __name__ == '__main__':
 
     crystalograph.createEmptyImage((screen_width, screen_height))
 
-    center_x = screen_width/2
-    center_y = screen_height / 2
+    center_x = int(screen_width / 2)
+    center_y = int(screen_height / 2)
 
     # Inner & outer alignment lines
     crystalograph.addLineToDraw(line_type="line", thickness=1, radius=350, begin_angle=0, end_angle=360,
@@ -100,14 +98,14 @@ if __name__ == '__main__':
                                         (120, 5, 0.2),
                                         (300, 25, 0.2)])
 
-    #Middle
+    # Middle
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y),
                                 spikes = [(60, 20, 0.2),
                                           (10, 5, 0.2),
                                           (300, 25, 0.2)])
 
-    #Outer
+    # Outer
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
                                 base_color="blue_3", center=(center_x, center_y),
                                 spikes=[(80, 25, 0.15),

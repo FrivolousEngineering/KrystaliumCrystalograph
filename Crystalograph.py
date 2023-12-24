@@ -1,10 +1,7 @@
-from typing import Tuple, Optional, Dict, List
+from typing import Tuple, Optional, List
 
-import numpy
 import numpy as np
 import cv2
-import math
-from scipy.signal import savgol_filter
 
 from ColorController import ColorController
 from DisplayLine import DisplayLine, Spike
@@ -21,14 +18,15 @@ NUM_SEGMENTS_PER_LENGTH = 0.4
 
 class Crystalograph:
     def __init__(self) -> None:
-        self._image = None
+        self._image: Optional[np.ndarray] = None
         self._center = (0, 0)
         self._width = 0
         self._height = 0
         self._lines_to_draw = []
         self._color_controller = ColorController()
 
-    def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None):
+    def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point,
+                      begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None):
         data = locals()
         del data["self"]
         if line_type == "line":
@@ -44,11 +42,9 @@ class Crystalograph:
     def drawTargetLines(self) -> None:
         """
         Draw the horizontal & vertical target line
-        :return:
         """
-
         # Numpy uses the convention `rows, columns`, instead of `x, y`.
-        # Therefore height, has to be before width.
+        # Therefore, height has to be before width.
         width = self._width
         height = self._height
 
@@ -56,37 +52,37 @@ class Crystalograph:
         cv2.line(self._image, (int(width / 2), 0), (int(width / 2), height), line_color, 1)
         cv2.line(self._image, (0, int(height / 2)), (width, int(height / 2)), line_color, 1)
 
-    def applyBlooming(self, gausian_ksize: int = 9, blur_ksize: int = 5) -> None:
+    def applyBlooming(self, gaussian_ksize: int = 9, blur_ksize: int = 5) -> None:
         # Provide some blurring to image, to create some bloom.
-        if gausian_ksize > 0:
-            cv2.GaussianBlur(self._image, (gausian_ksize, gausian_ksize), 0, dst=self._image)
+        if gaussian_ksize > 0:
+            cv2.GaussianBlur(self._image, (gaussian_ksize, gaussian_ksize), 0, dst=self._image)
         if blur_ksize > 0:
             cv2.blur(self._image, ksize=(blur_ksize, blur_ksize), dst=self._image)
 
-    def draw(self):
+    def draw(self) -> np.ndarray:
         # Draw all the lines
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, thickness_modifier = 2, noise_modifier = 0)
+            self._image = line.draw(self._image, thickness_modifier=2, noise_modifier=0)
 
         # Some nice blurring
-        self.applyBlooming(gausian_ksize=25, blur_ksize=25)
+        self.applyBlooming(gaussian_ksize=25, blur_ksize=25)
 
         self.applyBlooming()
         for line in self._lines_to_draw:
             self._image = line.draw(self._image)
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, override_color = "white", thickness_modifier = 0.2, noise_modifier = 1.2)
+            self._image = line.draw(self._image, override_color="white", thickness_modifier=0.2, noise_modifier=1.2)
 
         self.applyBlooming(0, 3)
-        #self.drawTargetLines()
+        # self.drawTargetLines()
         return self._image
 
-    def setup(self):
+    def setup(self) -> None:
         for line in self._lines_to_draw:
             line.setColorController(self._color_controller)
             line.setup()
 
-    def update(self):
+    def update(self) -> None:
         self._color_controller.update()
 
 
