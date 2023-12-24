@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # Middle
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y),
-                                mask=[5, 11, 12, 13, 14, 16, 17, 20, 21, 22, 23, 24, 250, 251, 252, 253, 254, 255])
+                                mask=[(0, 5), (10, 5), (15,5) ])
 
     # Outer
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,

@@ -50,13 +50,13 @@ class DisplayLine:
             spikes = []
         self._spikes = spikes
 
-        if mask is None:
-            mask = []
-        self._mask = mask
-
         self._max_variation = 25
         self._variation_number = random.randint(0, self._max_variation)
         self._num_segments = self._calculateNumSegments(self._radius, begin_angle, end_angle)
+        if mask is None:
+            mask = []
+        self._mask = mask
+        self._mask_array = self._generateMask()
 
     def setup(self) -> None:
         pass
@@ -77,9 +77,14 @@ class DisplayLine:
         pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle,
                                            noise=noise_modifier * self._noise)
         if self._mask:
-            masked_array = self._maskArray(pts, self._mask)
-            segments = np.ma.flatnotmasked_contiguous(masked_array)
-            final_points = [masked_array[s].reshape((-1, 1, 2)) for s in segments]
+            masked_array = self._maskArray(pts, self._mask_array)
+            segments = np.ma.clump_unmasked(masked_array)
+            # We need to flatten the array, because clump_unmask doesn't work on anything but 1d arrays.
+            # When we add the points to the final list we can reshape them again...
+            flattend_masked_array = masked_array.flatten()
+            final_points = []
+            for segment in segments:
+                final_points.append(np.reshape(flattend_masked_array[segment], (-1, 2)))
         else:
             pts = pts.reshape((-1, 1, 2))
             final_points = [pts]
@@ -96,17 +101,38 @@ class DisplayLine:
             image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
         else:
             # Actually draw them
-            for set_of_points in final_points:
+            for i, set_of_points in enumerate(final_points):
                 image = cv2.polylines(image, [set_of_points], self._is_closed, color_to_use, int(thickness_to_use))
+
         return image
 
-    def _generateMask(self, masks) -> np.ndarray:
+    def _generateMask(self) -> np.ndarray:
         """
         Converts angle & widths into array of indexes to be masked
         :param masks:
         :return: The indexes to be masked
         """
-        pass
+        pts = np.arange(self._num_segments)
+        mask = np.empty(self._num_segments, dtype = bool)
+        mask.fill(False)
+        # Calculate on what segment the masks needs to be!
+        total_angle_range = abs(self._begin_angle - self._end_angle)
+        angle_per_segment = self._num_segments / total_angle_range
+        for mask_angle, mask_width in self._mask:
+            angle_difference = abs(self._begin_angle - mask_angle)
+            segments_difference = angle_difference * angle_per_segment
+            segments_width = int(mask_width * angle_per_segment)
+
+            start = int(segments_difference - segments_width / 2)
+            end = int(segments_difference + segments_width / 2)
+
+            # We need to do it like this to ensure that wrapping (eg; setting angle of 0) will work.
+            if start < 0:
+                mask[:end] = True
+                mask[start:] = True
+            else:
+                mask[start: end] = True
+        return pts[mask]
 
     def generateModifiedRadius(self) -> np.ndarray:
         pts = np.empty(self._num_segments)
@@ -203,7 +229,6 @@ class DisplayLine:
         spacing_between_angle = total_angle / (self._num_segments - 1)
 
         modified_radius = self.generateModifiedRadius()
-
         # Calculate where the circle should be using NumPy array operations.
         segments = np.arange(self._num_segments)
         circle_x = -np.sin(segments * spacing_between_angle + begin_angle_rad) * modified_radius
@@ -212,7 +237,6 @@ class DisplayLine:
         # Combine x and y coordinates into a single NumPy array.
         pts = np.column_stack((circle_x, circle_y))
         pts = np.array(pts, np.int32)
-
         if noise != 0:
             noise_multiplier = self.generateNoiseMultiplierForCircle(self._num_segments, noise,
                                                                      min(int(self._num_segments / 8), 5),
