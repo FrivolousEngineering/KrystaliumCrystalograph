@@ -96,34 +96,44 @@ if __name__ == '__main__':
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    # Inner & outer alignment lines
-    crystalograph.addLineToDraw(line_type="line", thickness=1, radius=350, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x, center_y))
-    crystalograph.addLineToDraw(line_type="line", thickness=1, radius=30, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x, center_y))
 
-    '''# Inner
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=75, begin_angle=0, end_angle=360,
-                                base_color="blue", center=(center_x, center_y),
-                                spikes=[(60.5, 20.5, 0.2),
-                                        (120, 5, 0.2),
-                                        (300, 25, 0.2)])'''
-
-    # Middle
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
+    # Right Circle
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-30, end_angle=210,
                                 base_color="blue_2", center=(center_x + 75, center_y),
-                                mask=generateAngles(15, 10, -20, 223))
+                                mask= generateAngles(15, 10, -30, 210))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=210, end_angle=330,
+                                base_color="green", center=(center_x + 75, center_y))
 
-    '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
+    # Left Circle
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=30, end_angle=150,
+                                base_color="green", center=(center_x - 75, center_y))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=150, end_angle=390,
                                 base_color="blue_2", center=(center_x - 75, center_y),
-                                mask=generateAngles(15, 10, 160, 400))
+                                mask=generateAngles(15, 10, 150, 390))
 
+    # Bottom Circle
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-60, end_angle=60,
+                                base_color="green", center=(center_x, center_y + 75))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=60, end_angle=300,
+                                base_color="blue_2", center=(center_x, center_y + 75),
+                                mask=generateAngles(15, 10, 60, 300))
+
+    # Top Circle
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=120, end_angle=240,
+                                base_color="green", center=(center_x, center_y - 75))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-120, end_angle=120,
+                                base_color="blue_2", center=(center_x, center_y - 75),
+                                mask=generateAngles(15, 10, -120, 120))
+
+    '''
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y + 75),
                                 mask=generateAngles(15, 10, 63, 315))
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y - 75),
                                 mask=generateAngles(15, 10, 243, 495))'''
+
+
 
     # Outer
     '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
