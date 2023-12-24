@@ -40,8 +40,11 @@ class DisplayLine:
         self._radius: radius = radius
         self._thickness: int = thickness
         self._center: Point = center
-        self._begin_angle: int = begin_angle
-        self._end_angle: int = end_angle
+        self._begin_angle: int = self._angleClamp(begin_angle)
+        self._end_angle: int = self._angleClamp(end_angle)
+        if self._begin_angle > begin_angle:
+            self._end_angle += 360
+            self._end_angle: int = self._angleClamp(self._end_angle)
         self.line_type = line_type
         self._noise = 0.08 * (100 / radius)  # normalize the noise
         self._is_closed = False
@@ -106,6 +109,14 @@ class DisplayLine:
 
         return image
 
+    @staticmethod
+    def _angleClamp(angle):
+        while angle < 0:
+            angle += 360
+        while angle > 360:
+            angle -= 360
+        return angle
+
     def _generateMask(self) -> np.ndarray:
         """
         Converts angle & widths into array of indexes to be masked
@@ -118,8 +129,11 @@ class DisplayLine:
         # Calculate on what segment the masks needs to be!
         total_angle_range = abs(self._begin_angle - self._end_angle)
         angle_per_segment = self._num_segments / total_angle_range
+
         for mask_angle, mask_width in self._mask:
-            angle_difference = abs(self._begin_angle - mask_angle)
+            if mask_angle > self._end_angle or mask_angle < self._begin_angle:
+                continue
+            angle_difference = mask_angle - self._begin_angle
             segments_difference = angle_difference * angle_per_segment
             segments_width = int(mask_width * angle_per_segment)
 
@@ -143,6 +157,7 @@ class DisplayLine:
         angle_per_segment = self._num_segments / total_angle_range
 
         for spike_angle, spike_width, intensity in self._spikes:
+            # TODO: Not sure if this is correct. If you see issues here, check fix for mask
             angle_difference = abs(self._begin_angle - spike_angle)
             segments_difference = angle_difference * angle_per_segment
             segments_width = int(spike_width * angle_per_segment)

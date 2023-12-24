@@ -114,7 +114,7 @@ if __name__ == '__main__':
                                 base_color="blue_2", center=(center_x + 75, center_y),
                                 mask=generateAngles(15, 10, -20, 223))
 
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
+    '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x - 75, center_y),
                                 mask=generateAngles(15, 10, 160, 400))
 
@@ -123,7 +123,7 @@ if __name__ == '__main__':
                                 mask=generateAngles(15, 10, 63, 315))
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y - 75),
-                                mask=generateAngles(15, 10, 243, 495))
+                                mask=generateAngles(15, 10, 243, 495))'''
 
     # Outer
     '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
