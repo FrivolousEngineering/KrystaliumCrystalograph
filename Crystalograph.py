@@ -26,7 +26,7 @@ class Crystalograph:
         self._color_controller = ColorController()
 
     def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point,
-                      begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None):
+                      begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None, mask: Optional[List] = None):
         data = locals()
         del data["self"]
         if line_type == "line":

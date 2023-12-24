@@ -26,7 +26,7 @@ Spike = NamedTuple("Spike", [("angle", int),
 
 class DisplayLine:
     def __init__(self, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int,
-                 line_type: str, spikes: Optional[List[Spike]] = None) -> None:
+                 line_type: str, spikes: Optional[List[Spike]] = None, mask: Optional[List] = None) -> None:
         self._color_name = base_color
         self._radius: radius = radius
         self._thickness: int = thickness
@@ -41,6 +41,10 @@ class DisplayLine:
             spikes = []
         self._spikes = spikes
 
+        if mask is None:
+            mask = []
+        self._mask = mask
+
         self._max_variation = 25
         self._variation_number = random.randint(0, self._max_variation)
 
@@ -50,13 +54,25 @@ class DisplayLine:
     def setColorController(self, color_controller: ColorController) -> None:
         self._color_controller = color_controller
 
+    @staticmethod
+    def _maskArray(input_array, mask_indices):
+        mask = np.zeros_like(input_array, dtype=bool)
+        mask[mask_indices] = True
+        return np.ma.array(input_array, mask=mask)
+
     def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1,
              noise_modifier: float = 1.0):
         thickness_to_use = thickness_modifier * self._thickness
 
         pts = self.generateCirclePolyLines(self._center, self._radius, self._begin_angle, self._end_angle,
                                            noise=noise_modifier * self._noise)
-        pts = pts.reshape((-1, 1, 2))
+        if self._mask:
+            masked_array = self._maskArray(pts, self._mask)
+            segments = np.ma.flatnotmasked_contiguous(masked_array)
+            final_points = [masked_array[s].reshape((-1, 1, 2)) for s in segments]
+        else:
+            pts = pts.reshape((-1, 1, 2))
+            final_points = [pts]
 
         color_to_use = self._color_controller.getColor(self._color_name)
         if override_color is not None:
@@ -64,12 +80,14 @@ class DisplayLine:
 
         if alpha < 1.0:
             overlay = image.copy()
-            cv2.polylines(overlay, [pts], self._is_closed, color_to_use, int(thickness_to_use))
+            for set_of_points in final_points:
+                cv2.polylines(overlay, [set_of_points], self._is_closed, color_to_use, int(thickness_to_use))
 
             image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
         else:
             # Actually draw them
-            image = cv2.polylines(image, [pts], self._is_closed, color_to_use, int(thickness_to_use))
+            for set_of_points in final_points:
+                image = cv2.polylines(image, [set_of_points], self._is_closed, color_to_use, int(thickness_to_use))
         return image
 
     def generateModifiedRadius(self, num_segments):

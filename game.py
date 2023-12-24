@@ -101,9 +101,10 @@ if __name__ == '__main__':
     # Middle
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y),
-                                spikes = [(60, 20, 0.2),
-                                          (10, 5, 0.2),
-                                          (300, 25, 0.2)])
+                                spikes=[(60, 20, 0.2),
+                                        (10, 5, 0.2),
+                                        (300, 25, 0.2)],
+                                mask = [5,11,12,13,14,16,17,20,21,22,23,24, 250,251,252,253,254,255])
 
     # Outer
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
@@ -165,6 +166,6 @@ if __name__ == '__main__':
         pygame.display.flip()
         crystalograph.update()
         clock.tick()
-        #print(clock.get_fps())
+        # print(clock.get_fps())
 
     pygame.quit()
