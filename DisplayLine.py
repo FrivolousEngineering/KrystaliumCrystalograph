@@ -1,9 +1,10 @@
 from functools import cache
-from typing import Tuple
+from typing import Tuple, List, NamedTuple
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
+from ColorController import ColorController
 from FlickeringColor import FlickeringColor
 from typing import Tuple, Optional, Dict
 import random
@@ -18,10 +19,14 @@ Image = np.ndarray
 Point = Tuple[int, int]
 Color = Tuple[int, int, int]
 
+Spike = NamedTuple("Spike", [("angle", int),
+                             ("width", int),
+                             ("intensity", float)])
+
 
 class DisplayLine:
-    def __init__(self, base_color: "str", radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int,
-                 line_type: str, spikes):
+    def __init__(self, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int,
+                 line_type: str, spikes: Optional[List[Spike]] = None) -> None:
         self._color_name = base_color
         self._radius: radius = radius
         self._thickness: int = thickness
@@ -39,11 +44,11 @@ class DisplayLine:
         self._max_variation = 25
         self._variation_number = random.randint(0, self._max_variation)
 
-    def setup(self):
+    def setup(self) -> None:
         pass
 
-    def setColorController(self, color_controler):
-        self._color_controller = color_controler
+    def setColorController(self, color_controller: ColorController) -> None:
+        self._color_controller = color_controller
 
     def draw(self, image, override_color: None = None, alpha=1.0, thickness_modifier: float = 1,
              noise_modifier: float = 1.0):

@@ -1,4 +1,4 @@
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional, Dict, List
 
 import numpy
 import numpy as np
@@ -7,7 +7,7 @@ import math
 from scipy.signal import savgol_filter
 
 from ColorController import ColorController
-from DisplayLine import DisplayLine
+from DisplayLine import DisplayLine, Spike
 
 # Typing helpers
 from DoubleDisplayLine import DoubleDisplayLine
@@ -28,7 +28,7 @@ class Crystalograph:
         self._lines_to_draw = []
         self._color_controller = ColorController()
 
-    def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int, spikes = None):
+    def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point, begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None):
         data = locals()
         del data["self"]
         if line_type == "line":
