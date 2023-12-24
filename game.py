@@ -67,12 +67,19 @@ class GlitchHandler:
             horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 3.5)
 
 
-def generateAngles(spacing, angle_width):
-    num_angles = int(360 / spacing)
+def generateAngles(spacing, angle_width, start_angle = 0, end_angle = 360):
+
+    num_angles = int((end_angle - start_angle) / spacing)
     result = []
     for i in range(num_angles):
-        result.append((i * spacing, angle_width))
+        angle_to_use = start_angle + i * spacing
+        while angle_to_use < 0:
+            angle_to_use += 360
+        while angle_to_use > 360:
+            angle_to_use -= 360
+        result.append((angle_to_use, angle_width))
     return result
+
 
 if __name__ == '__main__':
     pygame.init()
@@ -95,25 +102,30 @@ if __name__ == '__main__':
     crystalograph.addLineToDraw(line_type="line", thickness=1, radius=30, begin_angle=0, end_angle=360,
                                 base_color="blue", center=(center_x, center_y))
 
-    # Inner
+    '''# Inner
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=75, begin_angle=0, end_angle=360,
                                 base_color="blue", center=(center_x, center_y),
                                 spikes=[(60.5, 20.5, 0.2),
                                         (120, 5, 0.2),
-                                        (300, 25, 0.2)])
+                                        (300, 25, 0.2)])'''
 
     # Middle
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=175, begin_angle=0, end_angle=360,
-                                base_color="blue_2", center=(center_x, center_y),
-                                mask=generateAngles(15, 5))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
+                                base_color="blue_2", center=(center_x + 75, center_y),
+                                mask=generateAngles(15, 10, -20, 223))
+
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
+                                base_color="blue_2", center=(center_x - 75, center_y),
+                                mask=generateAngles(15, 10, 160, 400))
+
 
     # Outer
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
+    '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
                                 base_color="blue_3", center=(center_x, center_y),
                                 spikes=[(80, 25, 0.15),
                                         (120, 5, 0.2),
                                         (150, 5, 0.15),
-                                        (270, 25, 0.2)])
+                                        (270, 25, 0.2)])'''
 
     crystalograph.setup()
     fader = Fader()
