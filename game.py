@@ -1,4 +1,5 @@
 import contextlib
+import math
 import random
 
 # This suppresses the `Hello from pygame` message.
@@ -67,8 +68,7 @@ class GlitchHandler:
             horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 3.5)
 
 
-def generateAngles(spacing, angle_width, start_angle = 0, end_angle = 360):
-
+def generateAngles(spacing, angle_width, start_angle=0, end_angle=360):
     num_angles = int((end_angle - start_angle) / spacing)
     result = []
     for i in range(num_angles):
@@ -96,34 +96,47 @@ if __name__ == '__main__':
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
+    circle_shift = 75
+    circle_radius = 150
 
+    angle_difference = int(math.degrees(math.asin(circle_shift / circle_radius)))
+
+    angle_difference_2 = int(math.degrees(math.acos(circle_shift / circle_radius)))
     # Right Circle
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-30, end_angle=210,
-                                base_color="blue_2", center=(center_x + 75, center_y),
-                                mask= generateAngles(15, 10, -30, 210))
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=210, end_angle=330,
-                                base_color="green", center=(center_x + 75, center_y))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius, begin_angle=-angle_difference,
+                                end_angle=180 + angle_difference,
+                                base_color="blue_2", center=(center_x + circle_shift, center_y),
+                                mask=generateAngles(15, 10, -angle_difference, 180 + angle_difference))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius, begin_angle=180 + angle_difference,
+                                end_angle=360 - angle_difference,
+                                base_color="green", center=(center_x + circle_shift, center_y))
 
     # Left Circle
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=30, end_angle=150,
-                                base_color="green", center=(center_x - 75, center_y))
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=150, end_angle=390,
-                                base_color="blue_2", center=(center_x - 75, center_y),
-                                mask=generateAngles(15, 10, 150, 390))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius, begin_angle=angle_difference,
+                                end_angle=180 - angle_difference,
+                                base_color="green", center=(center_x - circle_shift, center_y))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius, begin_angle=180 - angle_difference,
+                                end_angle=360 + angle_difference,
+                                base_color="blue_2", center=(center_x - circle_shift, center_y),
+                                mask=generateAngles(15, 10, 180 - angle_difference, 360 + angle_difference))
 
     # Bottom Circle
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-60, end_angle=60,
-                                base_color="green", center=(center_x, center_y + 75))
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=60, end_angle=300,
-                                base_color="blue_2", center=(center_x, center_y + 75),
-                                mask=generateAngles(15, 10, 60, 300))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius, begin_angle=-angle_difference_2,
+                                end_angle=angle_difference_2,
+                                base_color="green", center=(center_x, center_y + circle_shift))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius, begin_angle=angle_difference_2,
+                                end_angle=360 - angle_difference_2,
+                                base_color="blue_2", center=(center_x, center_y + circle_shift),
+                                mask=generateAngles(15, 10, angle_difference_2, 360 - angle_difference_2))
 
     # Top Circle
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=120, end_angle=240,
-                                base_color="green", center=(center_x, center_y - 75))
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=-120, end_angle=120,
-                                base_color="blue_2", center=(center_x, center_y - 75),
-                                mask=generateAngles(15, 10, -120, 120))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius,
+                                begin_angle=180 - angle_difference_2, end_angle=180 + angle_difference_2,
+                                base_color="green", center=(center_x, center_y - circle_shift))
+    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius,
+                                begin_angle=-180 + angle_difference_2, end_angle=180 - angle_difference_2,
+                                base_color="blue_2", center=(center_x, center_y - circle_shift),
+                                mask=generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2))
 
     '''
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
@@ -132,8 +145,6 @@ if __name__ == '__main__':
     crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
                                 base_color="blue_2", center=(center_x, center_y - 75),
                                 mask=generateAngles(15, 10, 243, 495))'''
-
-
 
     # Outer
     '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
