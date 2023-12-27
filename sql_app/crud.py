@@ -15,6 +15,7 @@ opposing_targets.addPair(Target.flesh, Target.plant)
 opposing_targets.addPair(Target.gas, Target.solid)
 opposing_targets.addPair(Target.gas, Target.liquid)
 opposing_targets.addPair(Target.liquid, Target.gas)
+opposing_targets.addPair(Target.krystal, Target.energy)
 
 
 opposing_actions = OpposingTraitController()
