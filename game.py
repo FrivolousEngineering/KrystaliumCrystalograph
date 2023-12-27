@@ -111,12 +111,14 @@ if __name__ == '__main__':
                                 mask=generateAngles(15, 10, -angle_difference, 180 + angle_difference))
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=180 + angle_difference,
                                 end_angle=360 - angle_difference,
-                                base_color="green", center=(center_x + circle_shift, center_y))
+                                base_color="green", center=(center_x + circle_shift, center_y),
+                                spikes = [(180+angle_difference + 10, 5, -0.2), (270, 10, -0.25)])
 
     # Left Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=angle_difference,
                                 end_angle=180 - angle_difference,
-                                base_color="green", center=(center_x - circle_shift, center_y))
+                                base_color="green", center=(center_x - circle_shift, center_y),
+                                spikes = [(80, 10, -0.15)])
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=180 - angle_difference,
                                 end_angle=360 + angle_difference,
                                 base_color="blue_2", center=(center_x - circle_shift, center_y),
