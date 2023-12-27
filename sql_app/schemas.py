@@ -46,6 +46,7 @@ class Target(str, Enum):
     light: str = "Light"
     sound: str = "Sound"
     krystal: str = "Krystal"
+    plant: str = "Plant"
 
 
 class Vulgarity(str, Enum):

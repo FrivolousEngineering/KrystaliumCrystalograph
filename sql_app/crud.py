@@ -11,9 +11,11 @@ import random
 
 opposing_targets = OpposingTraitController()
 opposing_targets.addPair(Target.mind, Target.flesh)
+opposing_targets.addPair(Target.flesh, Target.plant)
 opposing_targets.addPair(Target.gas, Target.solid)
 opposing_targets.addPair(Target.gas, Target.liquid)
 opposing_targets.addPair(Target.liquid, Target.gas)
+
 
 opposing_actions = OpposingTraitController()
 opposing_actions.addPair(Action.expanding, Action.contracting)
