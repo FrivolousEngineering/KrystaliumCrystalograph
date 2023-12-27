@@ -69,15 +69,11 @@ class GlitchHandler:
 
 
 def generateAngles(spacing, angle_width, start_angle=0, end_angle=360):
-    num_angles = int((end_angle - start_angle) / spacing)
+    angle_to_add = start_angle + 0.5 * angle_width
     result = []
-    for i in range(num_angles):
-        angle_to_use = start_angle + i * spacing
-        while angle_to_use < 0:
-            angle_to_use += 360
-        while angle_to_use > 360:
-            angle_to_use -= 360
-        result.append((angle_to_use, angle_width))
+    while angle_to_add < end_angle + 0.5 * angle_width:
+        result.append((angle_to_add, angle_width))
+        angle_to_add += spacing
     return result
 
 
@@ -115,11 +111,19 @@ if __name__ == '__main__':
     bottom_spikes = []
     top_spikes = []
 
-    right_mask = generateAngles(15, 10, -angle_difference, 180 + angle_difference)
-    left_mask = generateAngles(15, 5, 180 - angle_difference, 360 + angle_difference)
+    right_mask = generateAngles(30, 10, -angle_difference, 180 + angle_difference)
+    right_mask.extend(generateAngles(15, 5, -angle_difference, 180 + angle_difference))
+    right_mask.extend(generateAngles(60, 20, -angle_difference, 180 + angle_difference))
 
-    bottom_mask = generateAngles(40, 5, angle_difference_2, 360 - angle_difference_2)
-    top_mask = generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2)
+    left_mask = generateAngles(15, 5, 180 - angle_difference, 360 + angle_difference)
+    left_mask.extend(generateAngles(15, 5, 180 - angle_difference + 10, 360 + angle_difference))
+
+    bottom_mask = generateAngles(15, 5, angle_difference_2, 360 - angle_difference_2)
+    bottom_mask.extend(generateAngles(86, 40, angle_difference_2, 360-angle_difference_2))
+
+    top_mask = generateAngles(15, 5, -180 + angle_difference_2, 180 - angle_difference_2)
+    top_mask.extend(generateAngles(115, 40, -180 + angle_difference_2, 180 - angle_difference_2))
+    #top_mask = [] # generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2)
 
 
     # Right Circle
