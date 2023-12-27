@@ -96,50 +96,54 @@ if __name__ == '__main__':
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    circle_shift = 75
-    circle_radius = 150
+    circle_shift = 125
 
-    angle_difference = int(math.degrees(math.asin(circle_shift / circle_radius)))
+    circle_shift_horizontal = circle_shift
+    circle_shift_vertical = circle_shift
+    circle_radius = 200
 
-    angle_difference_2 = int(math.degrees(math.acos(circle_shift / circle_radius)))
+    angle_difference = int(math.degrees(math.asin(circle_shift_horizontal / circle_radius)))
+
+    angle_difference_2 = int(math.degrees(math.acos(circle_shift_vertical / circle_radius)))
     line_type = "double_line"
 
     # Right Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=-angle_difference,
                                 end_angle=180 + angle_difference,
-                                base_color="blue_2", center=(center_x + circle_shift, center_y),
+                                base_color="blue_2", center=(center_x + circle_shift_horizontal, center_y),
                                 mask=generateAngles(15, 10, -angle_difference, 180 + angle_difference))
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=180 + angle_difference,
                                 end_angle=360 - angle_difference,
-                                base_color="green", center=(center_x + circle_shift, center_y),
+                                base_color="green", center=(center_x + circle_shift_horizontal, center_y),
                                 spikes = [(180+angle_difference + 10, 5, -0.2), (270, 10, -0.25)])
 
     # Left Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=angle_difference,
                                 end_angle=180 - angle_difference,
-                                base_color="green", center=(center_x - circle_shift, center_y),
-                                spikes = [(80, 10, -0.15)])
+                                base_color="green", center=(center_x - circle_shift_horizontal, center_y),
+                                spikes = [(80, 2, -0.10), (80, 8, 0.20)])
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=180 - angle_difference,
                                 end_angle=360 + angle_difference,
-                                base_color="blue_2", center=(center_x - circle_shift, center_y),
-                                mask=generateAngles(15, 10, 180 - angle_difference, 360 + angle_difference))
+                                base_color="blue_2", center=(center_x - circle_shift_horizontal, center_y),
+                                spikes = [(180, 20, 0.1), (180, 10, 0.1)],
+                                mask=generateAngles(15, 5, 180 - angle_difference, 360 + angle_difference))
 
     # Bottom Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=-angle_difference_2,
                                 end_angle=angle_difference_2,
-                                base_color="green", center=(center_x, center_y + circle_shift))
+                                base_color="green", center=(center_x, center_y + circle_shift_vertical))
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius, begin_angle=angle_difference_2,
                                 end_angle=360 - angle_difference_2,
-                                base_color="blue_2", center=(center_x, center_y + circle_shift),
+                                base_color="blue_2", center=(center_x, center_y + circle_shift_vertical),
                                 mask=generateAngles(15, 10, angle_difference_2, 360 - angle_difference_2))
 
     # Top Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius,
                                 begin_angle=180 - angle_difference_2, end_angle=180 + angle_difference_2,
-                                base_color="green", center=(center_x, center_y - circle_shift))
+                                base_color="green", center=(center_x, center_y - circle_shift_vertical))
     crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius,
                                 begin_angle=-180 + angle_difference_2, end_angle=180 - angle_difference_2,
-                                base_color="blue_2", center=(center_x, center_y - circle_shift),
+                                base_color="blue_2", center=(center_x, center_y - circle_shift_vertical),
                                 mask=generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2))
 
     '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius,
