@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
@@ -63,9 +65,18 @@ def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session
 
 @app.post("/sample/random/", response_model=schemas.KrystaliumSample, responses={400: {"model": BadRequestError}})
 def create_random_krystalium_sample(sample: schemas.RandomKrystaliumSampleCreate, db: Session = Depends(get_db)):
-    checkUniqueRFID(db, sample.rfid_id)
+    if sample.num_samples > 1 and sample.rfid_id is not None:
+        raise HTTPException(status_code=400, detail=f"Impossible to create multiple RFID samples with the same RFID id")
 
-    return crud.createRandomSample(db, rfid_id = sample.rfid_id, vulgarity = sample.vulgarity)
+    if sample.num_samples == 1:
+        checkUniqueRFID(db, str(sample.rfid_id))
+
+        return crud.createRandomSample(db, rfid_id = str(sample.rfid_id), vulgarity = sample.vulgarity)
+    else:
+        result = None
+        for i in range(0, sample.num_samples):
+            result = crud.createRandomSample(db, rfid_id = str(uuid.uuid4()), vulgarity = sample.vulgarity)
+        return result
 
 
 @app.get("/refined/", response_model=list[schemas.RefinedKrystalium])

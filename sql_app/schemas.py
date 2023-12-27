@@ -56,7 +56,7 @@ class Vulgarity(str, Enum):
     When two traits (action or target) are the same, we call this 'invariant'.
 
     When two traits (action or target) are somewhat related (mind vs body, solid vs gas) we call it opposing. This is
-    less stable than invariant, but more stable than related.
+    less stable than invariant, but more stable than conflicted.
 
     When two traits (action or target) are not related (not opposing and not the same), we call this conflicted.
 
@@ -186,8 +186,9 @@ class RefinedKrystaliumFromSample(BaseModel):
 
 
 class RandomKrystaliumSampleCreate(BaseModel):
-    rfid_id: str = Field(description="The ID of the physical RFID in the sample")
+    rfid_id: Optional[str] = Field(None, description="The ID of the physical RFID in the sample. This can not be set when creating multiple samples")
     vulgarity: Optional[Vulgarity] = Field(None, description="When set, it will create a sample with the given vulgarity. If not set, it will entirely randomly create one")
+    num_samples: int = Field(1, description = "How many samples must be created. When this is set, rfid_id must be empty. This should only be used for debug purposes")
 
 
 class BadRequestError(BaseModel):
