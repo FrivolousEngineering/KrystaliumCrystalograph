@@ -284,7 +284,7 @@ class DisplayLine:
         segments = np.arange(num_segments)
         rand = np.sin(segments / 0.7) * rand_values + np.sin(segments / 1.1) * rand_values + np.sin(
             segments / 1.5) * rand_values
-        noise_multiplier = 0.5 * rand * noise + 0.5 * noise * np.random.random(num_segments)
+        noise_multiplier = 0.5 * rand * noise + 1 * noise * np.random.random(num_segments)
 
         # Apply Savitzky-Golay filter for smoothing
         noise_multiplier = savgol_filter(noise_multiplier, 5, 1)

@@ -18,6 +18,8 @@ class ColorController:
         self._colors["blue_3"] = FlickeringColor(0, 0, 255)
         self._colors["light_blue"] = FlickeringColor(173, 216, 230)
         self._colors["green"] = FlickeringColor(0, 255, 0)
+        self._colors["green_2"] = FlickeringColor(0, 255, 0)
+        self._colors["pale_green_2"] = FlickeringColor(128, 255, 128)
         self._colors["yellow"] = FlickeringColor(255, 255, 0)
 
     def getColor(self, color_name: str) -> Color:
