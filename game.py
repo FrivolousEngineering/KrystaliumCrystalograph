@@ -142,6 +142,8 @@ if __name__ == '__main__':
     bottom_spikes = []
     top_spikes = []
 
+    line_thickness = 5
+
     right_mask = generatePattern2(-angle_difference, 180 + angle_difference)
     left_mask = generatePattern2(180 - angle_difference, 360 + angle_difference)
 
@@ -153,43 +155,43 @@ if __name__ == '__main__':
 
 
     # Right Circle
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_horizontal,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_horizontal,
                                 begin_angle=180 + angle_difference,
                                 end_angle=360 - angle_difference,
                                 base_color="green", center=(center_x + circle_shift_horizontal, center_y),
                                 spikes=right_spikes)
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_horizontal, begin_angle=-angle_difference,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_horizontal, begin_angle=-angle_difference,
                                 end_angle=180 + angle_difference,
                                 base_color="blue", center=(center_x + circle_shift_horizontal, center_y),
                                 mask = right_mask)
 
 
     # Left Circle
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_horizontal, begin_angle=angle_difference,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_horizontal, begin_angle=angle_difference,
                                 end_angle=180 - angle_difference,
                                 base_color="green", center=(center_x - circle_shift_horizontal, center_y),
                                 spikes = left_spikes)
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_horizontal, begin_angle=180 - angle_difference,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_horizontal, begin_angle=180 - angle_difference,
                                 end_angle=360 + angle_difference,
                                 base_color="blue", center=(center_x - circle_shift_horizontal, center_y),
                                 mask=left_mask)
 
     # Bottom Circle
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_vertical, begin_angle=-angle_difference_2,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_vertical, begin_angle=-angle_difference_2,
                                 end_angle=angle_difference_2,
                                 base_color="green_2", center=(center_x, center_y + circle_shift_vertical),
                                 spikes = bottom_spikes)
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_vertical, begin_angle=angle_difference_2,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_vertical, begin_angle=angle_difference_2,
                                 end_angle=360 - angle_difference_2,
                                 base_color="blue_2", center=(center_x, center_y + circle_shift_vertical),
                                 mask=bottom_mask)
 
     # Top Circle
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_vertical,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_vertical,
                                 begin_angle=180 - angle_difference_2, end_angle=180 + angle_difference_2,
                                 base_color="green_2", center=(center_x, center_y - circle_shift_vertical),
                                 spikes = top_spikes)
-    crystalograph.addLineToDraw(line_type=line_type, thickness=5, radius=circle_radius_vertical,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_vertical,
                                 begin_angle=-180 + angle_difference_2, end_angle=180 - angle_difference_2,
                                 base_color="blue_2", center=(center_x, center_y - circle_shift_vertical),
                                 mask=top_mask)
