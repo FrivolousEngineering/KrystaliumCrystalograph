@@ -39,6 +39,9 @@ class Crystalograph:
         self._height, self._width = self._image.shape[:2]
         self._center = (int(self._width / 2), int(self._height / 2))
 
+    def clearLinesToDraw(self):
+        self._lines_to_draw = []
+
     def drawTargetLines(self) -> None:
         """
         Draw the horizontal & vertical target line

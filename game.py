@@ -257,18 +257,7 @@ def getRandomPatternFunction():
     return result
 
 
-if __name__ == '__main__':
-    pygame.init()
-    screen_width = 1280
-    screen_height = 720
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    clock = pygame.time.Clock()
-    running = True
-    crystalograph = Crystalograph.Crystalograph()
-    glitch_handler = GlitchHandler()
-
-    crystalograph.createEmptyImage((screen_width, screen_height))
-
+def addRandomLinesToCrystalograph(crystalograph):
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
@@ -365,6 +354,21 @@ if __name__ == '__main__':
                                 base_color=vertical_outer_color, center=(center_x, center_y - circle_shift_vertical),
                                 mask=top_mask)
 
+
+if __name__ == '__main__':
+    pygame.init()
+    screen_width = 1280
+    screen_height = 720
+    screen = pygame.display.set_mode((screen_width, screen_height))
+    clock = pygame.time.Clock()
+    running = True
+    crystalograph = Crystalograph.Crystalograph()
+    glitch_handler = GlitchHandler()
+
+    crystalograph.createEmptyImage((screen_width, screen_height))
+
+    addRandomLinesToCrystalograph(crystalograph)
+
     crystalograph.setup()
     fader = Fader()
     screen_shake = 0
@@ -390,6 +394,10 @@ if __name__ == '__main__':
                 fader.fadeOut()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
                 screen_shake += 40
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+                crystalograph.clearLinesToDraw()
+                addRandomLinesToCrystalograph(crystalograph)
+                crystalograph.setup()
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_b:
                 glitch_handler.glitch()
