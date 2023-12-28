@@ -240,9 +240,9 @@ if __name__ == '__main__':
     bottom_spikes = []
     top_spikes = []
 
-    line_thickness = 5
+    line_thickness = 3
     outer_line_thickness = line_thickness
-    inner_line_thickness = line_thickness
+    inner_line_thickness = line_thickness + 2
 
     right_mask = generatePattern1(-angle_difference, 180 + angle_difference)
     left_mask = generatePattern1(180 - angle_difference, 360 + angle_difference)
@@ -261,7 +261,6 @@ if __name__ == '__main__':
     #top_mask.extend(generateAngles(115, 40, -180 + angle_difference_2, 180 - angle_difference_2))
     #top_mask = [] # generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2)
 
-
     # Right Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_horizontal,
                                 begin_angle=180 + angle_difference,
@@ -272,7 +271,6 @@ if __name__ == '__main__':
                                 end_angle=180 + angle_difference,
                                 base_color=horizontal_outer_color, center=(center_x + circle_shift_horizontal, center_y),
                                 mask = right_mask)
-
 
     # Left Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_horizontal, begin_angle=angle_difference,
@@ -285,7 +283,7 @@ if __name__ == '__main__':
                                 mask=left_mask)
 
     # Bottom Circle
-    crystalograph.addLineToDraw(line_type=line_type, thickness=line_thickness, radius=circle_radius_vertical, begin_angle=-angle_difference_2,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_vertical, begin_angle=-angle_difference_2,
                                 end_angle=angle_difference_2,
                                 base_color=vertical_inner_color, center=(center_x, center_y + circle_shift_vertical),
                                 spikes = bottom_spikes)
@@ -303,27 +301,6 @@ if __name__ == '__main__':
                                 begin_angle=-180 + angle_difference_2, end_angle=180 - angle_difference_2,
                                 base_color=vertical_outer_color, center=(center_x, center_y - circle_shift_vertical),
                                 mask=top_mask)
-
-    '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=circle_radius,
-                                begin_angle=0, end_angle=360,
-                                base_color="red", center=(center_x + 6 * circle_shift, center_y),
-                                mask=[(20, 15), (50,3), (55,4), (66, 5), (77, 6), (88, 9), (110, 15)])'''
-
-    '''
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
-                                base_color="blue_2", center=(center_x, center_y + 75),
-                                mask=generateAngles(15, 10, 63, 315))
-    crystalograph.addLineToDraw(line_type="line", thickness=5, radius=150, begin_angle=0, end_angle=360,
-                                base_color="blue_2", center=(center_x, center_y - 75),
-                                mask=generateAngles(15, 10, 243, 495))'''
-
-    # Outer
-    '''crystalograph.addLineToDraw(line_type="line", thickness=5, radius=275, begin_angle=0, end_angle=360,
-                                base_color="blue_3", center=(center_x, center_y),
-                                spikes=[(80, 25, 0.15),
-                                        (120, 5, 0.2),
-                                        (150, 5, 0.15),
-                                        (270, 25, 0.2)])'''
 
     crystalograph.setup()
     fader = Fader()
