@@ -15,8 +15,6 @@ import numpy as np
 import Crystalograph
 
 
-
-
 def drawVerticalPatterns(crystalograph, inner_color, outer_color, inner_line_thickness, outer_line_thickness,
                          circle_radius, circle_shift, line_type="double_line"):
     angle_difference = int(math.degrees(math.acos(circle_shift / circle_radius)))
@@ -59,8 +57,8 @@ def drawHorizontalPatterns(crystalograph, inner_color, outer_color, inner_line_t
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    spike_func = SpikeGenerator.getRandomSpikeFunction()
-    pattern_func = MaskGenerator.getRandomMaskFunction()
+    spike_func = SpikeGenerator.getSpikeFunctionByTarget("gas")
+    pattern_func = MaskGenerator.getMaskFunctionByAction("expanding")
 
     right_mask = pattern_func(-angle_difference, 180 + angle_difference)
     left_mask = pattern_func(180 - angle_difference, 360 + angle_difference)
@@ -122,6 +120,7 @@ if __name__ == '__main__':
     crystalograph.createEmptyImage((screen_width, screen_height))
 
     addRandomLinesToCrystalograph(crystalograph)
+
 
     crystalograph.setup()
     fader = Fader()

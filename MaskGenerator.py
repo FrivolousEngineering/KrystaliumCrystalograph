@@ -1,5 +1,7 @@
 import random
 
+from sql_app.schemas import Action
+
 
 class MaskGenerator:
     def __init__(self):
@@ -148,4 +150,10 @@ class MaskGenerator:
         result = []
         result.extend(MaskGenerator.generateAngles(8, 4, start_angle, end_angle))
         result.extend(MaskGenerator.generateAngles(4, 2, start_angle, end_angle))
+        return result
+
+    @staticmethod
+    def getMaskFunctionByAction(action):
+        action_list = list(Action)
+        result = getattr(MaskGenerator, f"generateMask{action_list.index(action.title()) + 1}")
         return result

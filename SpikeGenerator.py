@@ -2,6 +2,8 @@
 
 import random
 
+from sql_app.schemas import Target
+
 
 class SpikeGenerator:
     def __init__(self):
@@ -104,4 +106,10 @@ class SpikeGenerator:
         random_num = random.randint(1, 10)
         result = getattr(SpikeGenerator, f"generateSpikes{random_num}")
         print("Generated spike ", random_num)
+        return result
+
+    @staticmethod
+    def getSpikeFunctionByTarget(target):
+        target_list = list(Target)
+        result = getattr(SpikeGenerator, f"generateSpikes{target_list.index(target.title()) + 1}")
         return result
