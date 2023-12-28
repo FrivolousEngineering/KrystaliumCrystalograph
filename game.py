@@ -57,8 +57,8 @@ def drawHorizontalPatterns(crystalograph, inner_color, outer_color, inner_line_t
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    spike_func = SpikeGenerator.getSpikeFunctionByTarget("gas")
-    pattern_func = MaskGenerator.getMaskFunctionByAction("expanding")
+    spike_func = SpikeGenerator.getRandomSpikeFunction()
+    pattern_func = MaskGenerator.getRandomMaskFunction()
 
     right_mask = pattern_func(-angle_difference, 180 + angle_difference)
     left_mask = pattern_func(180 - angle_difference, 360 + angle_difference)
@@ -101,8 +101,10 @@ def addRandomLinesToCrystalograph(crystalograph):
     line_thickness = 3
     outer_line_thickness = line_thickness
     inner_line_thickness = line_thickness + 2
+    print("Positive:")
     drawHorizontalPatterns(crystalograph, "green", "blue", inner_line_thickness, outer_line_thickness, circle_radius,
                            circle_shift)
+    print("Negative:")
     drawVerticalPatterns(crystalograph, "green_2", "blue_2", inner_line_thickness, outer_line_thickness, circle_radius,
                          circle_shift)
 
@@ -120,7 +122,6 @@ if __name__ == '__main__':
     crystalograph.createEmptyImage((screen_width, screen_height))
 
     addRandomLinesToCrystalograph(crystalograph)
-
 
     crystalograph.setup()
     fader = Fader()

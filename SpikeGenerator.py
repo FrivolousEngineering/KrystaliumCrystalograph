@@ -103,10 +103,9 @@ class SpikeGenerator:
 
     @staticmethod
     def getRandomSpikeFunction():
-        random_num = random.randint(1, 10)
-        result = getattr(SpikeGenerator, f"generateSpikes{random_num}")
-        print("Generated spike ", random_num)
-        return result
+        target = random.choice(list(Target))
+        print(f"Giving Spike for {target}")
+        return SpikeGenerator.getSpikeFunctionByTarget(target)
 
     @staticmethod
     def getSpikeFunctionByTarget(target):

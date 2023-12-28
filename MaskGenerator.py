@@ -9,10 +9,9 @@ class MaskGenerator:
 
     @staticmethod
     def getRandomMaskFunction():
-        random_num = random.randint(1, 17)
-        result = getattr(MaskGenerator, f"generateMask{random_num}")
-        print("Generated mask ", random_num)
-        return result
+        action = random.choice(list(Action))
+        print(f"Giving mask for {action}")
+        return MaskGenerator.getMaskFunctionByAction(action)
 
     @staticmethod
     def generateAngles(spacing, angle_width, start_angle=0, end_angle=360, shift=0):
