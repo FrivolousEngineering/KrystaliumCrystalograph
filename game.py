@@ -370,9 +370,6 @@ if __name__ == '__main__':
     horizontal_outer_color = outer_color
     vertical_outer_color = outer_color + "_2"
 
-    # top_mask.extend(generateAngles(115, 40, -180 + angle_difference_2, 180 - angle_difference_2))
-    # top_mask = [] # generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2)
-
     # Right Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_horizontal,
                                 begin_angle=180 + angle_difference,
