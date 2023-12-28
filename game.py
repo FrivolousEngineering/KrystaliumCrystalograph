@@ -65,7 +65,7 @@ class GlitchHandler:
 
     def draw(self, _screen) -> None:
         if self._glitch_counter:
-            horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 3.5)
+            horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 5)
 
 
 def generateAngles(spacing, angle_width, start_angle=0, end_angle=360, shift = 0):
@@ -146,11 +146,11 @@ if __name__ == '__main__':
     outer_line_thickness = line_thickness
     inner_line_thickness = line_thickness
 
-    right_mask = generatePattern2(-angle_difference, 180 + angle_difference)
-    left_mask = generatePattern2(180 - angle_difference, 360 + angle_difference)
+    right_mask = generatePattern1(-angle_difference, 180 + angle_difference)
+    left_mask = generatePattern1(180 - angle_difference, 360 + angle_difference)
 
-    bottom_mask = generatePattern4(angle_difference_2, 360 - angle_difference_2)
-    top_mask = generatePattern4(-180 + angle_difference_2, 180 - angle_difference_2)
+    bottom_mask = generatePattern3(angle_difference_2, 360 - angle_difference_2)
+    top_mask = generatePattern3(-180 + angle_difference_2, 180 - angle_difference_2)
 
     inner_color = "green"
     horizontal_inner_color = inner_color
