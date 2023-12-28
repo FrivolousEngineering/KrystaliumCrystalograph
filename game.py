@@ -6,6 +6,7 @@ import random
 from Fader import Fader
 from GlitchHandler import GlitchHandler
 from MaskGenerator import MaskGenerator
+from SpikeGenerator import SpikeGenerator
 
 with contextlib.redirect_stdout(None):
     import pygame
@@ -14,103 +15,6 @@ import numpy as np
 import Crystalograph
 
 
-def generateSpikes1(start_angle, end_angle):
-    half_angle = abs(end_angle - start_angle) / 2
-    result = [(start_angle + half_angle, 40, 0.15),
-              (start_angle + half_angle, 30, -0.05),
-              (start_angle + half_angle, 15, -0.15),
-              (start_angle + half_angle, 2, 0.2)]
-    return result
-
-
-def generateSpikes2(start_angle, end_angle):
-    third_angle = abs(end_angle - start_angle) / 3
-    result = [(start_angle + third_angle, 20, 0.05),
-              (end_angle - third_angle, 20, -0.05)]
-    return result
-
-
-def generateSpikes3(start_angle, end_angle):
-    third_angle = abs(end_angle - start_angle) / 3
-    half_angle = abs(end_angle - start_angle) / 2
-    result = [(start_angle + third_angle, 20, 0.05),
-              (start_angle + half_angle, 20, -0.05),
-              (end_angle - third_angle, 20, 0.05)]
-    return result
-
-
-def generateSpikes4(start_angle, end_angle):
-    quarter_angle = abs(end_angle - start_angle) / 4
-    third_angle = abs(end_angle - start_angle) / 3
-    result = [(start_angle + quarter_angle, 20, 0.1),
-              (start_angle + third_angle, 5, -0.1),
-              (end_angle - third_angle, 5, -0.1),
-              (end_angle - quarter_angle, 20, 0.1)]
-    return result
-
-
-def generateSpikes5(start_angle, end_angle):
-    quarter_angle = abs(end_angle - start_angle) / 4
-    third_angle = abs(end_angle - start_angle) / 3
-    result = [(start_angle + quarter_angle, 5, -0.1),
-              (start_angle + third_angle, 5, -0.1),
-              (end_angle - third_angle, 5, -0.1),
-              (end_angle - quarter_angle, 5, -0.1)]
-    return result
-
-
-def generateSpikes6(start_angle, end_angle):
-    quarter_angle = abs(end_angle - start_angle) / 4
-    third_angle = abs(end_angle - start_angle) / 3
-    half_angle = abs(end_angle - start_angle) / 2
-    result = [(start_angle + quarter_angle, 10, -0.1),
-              (start_angle + third_angle, 10, -0.1),
-              (start_angle + half_angle, 10, -0.15),
-              (end_angle - third_angle, 10, -0.1),
-              (end_angle - quarter_angle, 10, -0.1)]
-    return result
-
-
-def generateSpikes7(start_angle, end_angle):
-    half_angle = abs(end_angle - start_angle) / 2
-    result = [(start_angle + half_angle, half_angle, -0.15)]
-    return result
-
-
-def generateSpikes8(start_angle, end_angle):
-    half_angle = abs(end_angle - start_angle) / 2
-    result = [(start_angle + half_angle, half_angle, 0.15)]
-    return result
-
-
-def generateSpikes9(start_angle, end_angle):
-    half_angle = abs(end_angle - start_angle) / 2
-    quarter_angle = abs(end_angle - start_angle) / 4
-    third_angle = abs(end_angle - start_angle) / 3
-    result = [(start_angle + third_angle, quarter_angle, 0.05),
-              (start_angle + quarter_angle, 5, -0.1),
-              (start_angle + half_angle, third_angle, 0.15),
-              (start_angle + half_angle, 5, -0.15),
-              (end_angle - quarter_angle, 5, -0.1),
-              (end_angle - third_angle, quarter_angle, 0.05)]
-    return result
-
-
-def generateSpikes10(start_angle, end_angle):
-    half_angle = abs(end_angle - start_angle) / 2
-    quarter_angle = abs(end_angle - start_angle) / 4
-
-    result = [(start_angle + quarter_angle, 10, 0.15),
-              (start_angle + half_angle, 10, -0.15),
-              (end_angle - quarter_angle, 10, 0.15)]
-    return result
-
-
-def getRandomSpikeFunction():
-    random_num = random.randint(1, 10)
-    result = globals()[f"generateSpikes{random_num}"]
-    print("Generated spike ", random_num)
-    return result
 
 
 def drawVerticalPatterns(crystalograph, inner_color, outer_color, inner_line_thickness, outer_line_thickness,
@@ -119,7 +23,7 @@ def drawVerticalPatterns(crystalograph, inner_color, outer_color, inner_line_thi
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    spike_func = getRandomSpikeFunction()
+    spike_func = SpikeGenerator.getRandomSpikeFunction()
     mask_func = MaskGenerator.getRandomMaskFunction()
 
     bottom_spikes = spike_func(-angle_difference, angle_difference)
@@ -155,7 +59,7 @@ def drawHorizontalPatterns(crystalograph, inner_color, outer_color, inner_line_t
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    spike_func = getRandomSpikeFunction()
+    spike_func = SpikeGenerator.getRandomSpikeFunction()
     pattern_func = MaskGenerator.getRandomMaskFunction()
 
     right_mask = pattern_func(-angle_difference, 180 + angle_difference)
