@@ -22,7 +22,7 @@ def generateAngles(spacing, angle_width, start_angle=0, end_angle=360, shift=0):
     return result
 
 
-def generatePattern1(start_angle, end_angle):
+def generateMask1(start_angle, end_angle):
     result = []
     result.extend(generateAngles(30, 10, start_angle, end_angle))
     result.extend(generateAngles(15, 5, start_angle, end_angle))
@@ -30,21 +30,21 @@ def generatePattern1(start_angle, end_angle):
     return result
 
 
-def generatePattern2(start_angle, end_angle):
+def generateMask2(start_angle, end_angle):
     result = []
     result.extend(generateAngles(15, 5, start_angle, end_angle))
     result.extend(generateAngles(16, 10, start_angle, end_angle))
     return result
 
 
-def generatePattern3(start_angle, end_angle):
+def generateMask3(start_angle, end_angle):
     result = []
     result.extend(generateAngles(15, 5, start_angle, end_angle))
     result.extend(generateAngles(16, 5, start_angle, end_angle))
     return result
 
 
-def generatePattern4(start_angle, end_angle):
+def generateMask4(start_angle, end_angle):
     result = []
     result.extend(generateAngles(30, 5, start_angle, end_angle))
     result.extend(generateAngles(30, 5, start_angle, end_angle))
@@ -53,28 +53,28 @@ def generatePattern4(start_angle, end_angle):
     return result
 
 
-def generatePattern5(start_angle, end_angle):
+def generateMask5(start_angle, end_angle):
     result = []
     result.extend(generateAngles(20, 10, start_angle, end_angle))
     result.extend(generateAngles(30, 15, start_angle, end_angle))
     return result
 
 
-def generatePattern6(start_angle, end_angle):
+def generateMask6(start_angle, end_angle):
     result = []
     result.extend(generateAngles(60, 10, start_angle, end_angle))
     result.extend(generateAngles(70, 10, start_angle, end_angle))
     return result
 
 
-def generatePattern7(start_angle, end_angle):
+def generateMask7(start_angle, end_angle):
     result = []
     result.extend(generateAngles(15, 2, start_angle, end_angle))
     result.extend(generateAngles(20, 3, start_angle, end_angle))
     return result
 
 
-def generatePattern8(start_angle, end_angle):
+def generateMask8(start_angle, end_angle):
     result = []
     result.extend(generateAngles(15, 2, start_angle, end_angle))
     result.extend(generateAngles(20, 3, start_angle, end_angle))
@@ -82,7 +82,7 @@ def generatePattern8(start_angle, end_angle):
     return result
 
 
-def generatePattern9(start_angle, end_angle):
+def generateMask9(start_angle, end_angle):
     result = []
     result.extend(generateAngles(30, 10, start_angle + 10, end_angle))
     result.extend(generateAngles(60, 15, start_angle + 20, end_angle))
@@ -90,7 +90,7 @@ def generatePattern9(start_angle, end_angle):
     return result
 
 
-def generatePattern10(start_angle, end_angle):
+def generateMask10(start_angle, end_angle):
     result = []
     result.extend(generateAngles(10, 5, start_angle, start_angle + 60 + 5))
     result.extend(generateAngles(20, 10, start_angle + 60, end_angle - 60))
@@ -98,7 +98,7 @@ def generatePattern10(start_angle, end_angle):
     return result
 
 
-def generatePattern11(start_angle, end_angle):
+def generateMask11(start_angle, end_angle):
     result = []
     result.extend(generateAngles(20, 10, start_angle, start_angle + 60 + 5))
     result.extend(generateAngles(10, 5, start_angle + 60, end_angle - 60))
@@ -106,7 +106,7 @@ def generatePattern11(start_angle, end_angle):
     return result
 
 
-def generatePattern12(start_angle, end_angle):
+def generateMask12(start_angle, end_angle):
     result = []
     result.extend(generateAngles(15, 10, start_angle, start_angle + 60 + 5))
     result.extend(generateAngles(8, 5, start_angle + 60, end_angle - 60))
@@ -114,7 +114,7 @@ def generatePattern12(start_angle, end_angle):
     return result
 
 
-def generatePattern13(start_angle, end_angle):
+def generateMask13(start_angle, end_angle):
     result = []
     result.extend(generateAngles(8, 5, start_angle, start_angle + 60 + 5))
     result.extend(generateAngles(15, 10, start_angle + 60, end_angle - 60))
@@ -122,7 +122,7 @@ def generatePattern13(start_angle, end_angle):
     return result
 
 
-def generatePattern14(start_angle, end_angle):
+def generateMask14(start_angle, end_angle):
     result = []
     half_angle = abs(end_angle - start_angle) / 2
     result.extend(generateAngles(12, 6, start_angle, start_angle + half_angle))
@@ -130,7 +130,7 @@ def generatePattern14(start_angle, end_angle):
     return result
 
 
-def generatePattern15(start_angle, end_angle):
+def generateMask15(start_angle, end_angle):
     result = []
     half_angle = abs(end_angle - start_angle) / 2
     result.extend(generateAngles(22, 11, start_angle, start_angle + half_angle))
@@ -138,13 +138,13 @@ def generatePattern15(start_angle, end_angle):
     return result
 
 
-def generatePattern16(start_angle, end_angle):
+def generateMask16(start_angle, end_angle):
     result = []
     result.extend(generateAngles(4, 2, start_angle, end_angle))
     return result
 
 
-def generatePattern17(start_angle, end_angle):
+def generateMask17(start_angle, end_angle):
     result = []
     result.extend(generateAngles(8, 4, start_angle, end_angle))
     result.extend(generateAngles(4, 2, start_angle, end_angle))
@@ -250,10 +250,10 @@ def getRandomSpikeFunction():
     return result
 
 
-def getRandomPatternFunction():
+def getRandomMaskFunction():
     random_num = random.randint(1, 17)
-    result = globals()[f"generatePattern{random_num}"]
-    print("Generated pattern ", random_num)
+    result = globals()[f"generateMask{random_num}"]
+    print("Generated mask ", random_num)
     return result
 
 
@@ -264,13 +264,13 @@ def drawVerticalPatterns(crystalograph, inner_color, outer_color, inner_line_thi
     center_y = int(screen_height / 2)
 
     spike_func = getRandomSpikeFunction()
-    pattern_func = getRandomPatternFunction()
+    mask_func = getRandomMaskFunction()
 
     bottom_spikes = spike_func(-angle_difference, angle_difference)
     top_spikes = spike_func(180 - angle_difference, 180 + angle_difference)
 
-    bottom_mask = pattern_func(angle_difference, 360 - angle_difference)
-    top_mask = pattern_func(-180 + angle_difference, 180 - angle_difference)
+    bottom_mask = mask_func(angle_difference, 360 - angle_difference)
+    top_mask = mask_func(-180 + angle_difference, 180 - angle_difference)
 
     crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius,
                                 begin_angle=-angle_difference,
@@ -300,7 +300,7 @@ def drawHorizontalPatterns(crystalograph, inner_color, outer_color, inner_line_t
     center_y = int(screen_height / 2)
 
     spike_func = getRandomSpikeFunction()
-    pattern_func = getRandomPatternFunction()
+    pattern_func = getRandomMaskFunction()
 
     right_mask = pattern_func(-angle_difference, 180 + angle_difference)
     left_mask = pattern_func(180 - angle_difference, 360 + angle_difference)
