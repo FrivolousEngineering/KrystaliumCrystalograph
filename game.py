@@ -108,6 +108,104 @@ def generatePattern4(start_angle, end_angle):
     return result
 
 
+def generatePattern5(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(20, 10, start_angle, end_angle))
+    result.extend(generateAngles(30, 15, start_angle, end_angle))
+    return result
+
+
+def generatePattern6(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(60, 10, start_angle, end_angle))
+    result.extend(generateAngles(70, 10, start_angle, end_angle))
+    return result
+
+
+def generatePattern7(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(15, 2, start_angle, end_angle))
+    result.extend(generateAngles(20, 3, start_angle, end_angle))
+    return result
+
+
+def generatePattern8(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(15, 2, start_angle, end_angle))
+    result.extend(generateAngles(20, 3, start_angle, end_angle))
+    result.extend(generateAngles(25, 3, start_angle, end_angle))
+    return result
+
+
+def generatePattern9(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(30, 10, start_angle + 10, end_angle))
+    result.extend(generateAngles(60, 15, start_angle + 20, end_angle))
+    result.extend(generateAngles(15, 2, start_angle + 10, end_angle))
+    return result
+
+
+def generatePattern10(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(10, 5, start_angle, start_angle + 60 + 5))
+    result.extend(generateAngles(20, 10, start_angle + 60, end_angle - 60))
+    result.extend(generateAngles(10, 5, end_angle - 60, end_angle))
+    return result
+
+
+def generatePattern11(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(20, 10, start_angle, start_angle + 60 + 5))
+    result.extend(generateAngles(10, 5, start_angle + 60, end_angle - 60))
+    result.extend(generateAngles(20, 10, end_angle - 60, end_angle))
+    return result
+
+
+def generatePattern12(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(15, 10, start_angle, start_angle + 60 + 5))
+    result.extend(generateAngles(8, 5, start_angle + 60, end_angle - 60))
+    result.extend(generateAngles(15, 10, end_angle - 60, end_angle))
+    return result
+
+
+def generatePattern13(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(8, 5, start_angle, start_angle + 60 + 5))
+    result.extend(generateAngles(15, 10, start_angle + 60, end_angle - 60))
+    result.extend(generateAngles(8, 5, end_angle - 60, end_angle))
+    return result
+
+
+def generatePattern14(start_angle, end_angle):
+    result = []
+    half_angle = abs(end_angle - start_angle) / 2
+    result.extend(generateAngles(12, 6, start_angle, start_angle + half_angle))
+    result.extend(generateAngles(22, 11, start_angle + half_angle, end_angle))
+    return result
+
+
+def generatePattern15(start_angle, end_angle):
+    result = []
+    half_angle = abs(end_angle - start_angle) / 2
+    result.extend(generateAngles(22, 11, start_angle, start_angle + half_angle))
+    result.extend(generateAngles(12, 6, start_angle + half_angle, end_angle))
+    return result
+
+
+def generatePattern16(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(4, 2, start_angle, end_angle))
+    return result
+
+
+def generatePattern17(start_angle, end_angle):
+    result = []
+    result.extend(generateAngles(8, 4, start_angle, end_angle))
+    result.extend(generateAngles(4, 2, start_angle, end_angle))
+    return result
+
+
 if __name__ == '__main__':
     pygame.init()
     screen_width = 1280
@@ -149,8 +247,8 @@ if __name__ == '__main__':
     right_mask = generatePattern1(-angle_difference, 180 + angle_difference)
     left_mask = generatePattern1(180 - angle_difference, 360 + angle_difference)
 
-    bottom_mask = generatePattern3(angle_difference_2, 360 - angle_difference_2)
-    top_mask = generatePattern3(-180 + angle_difference_2, 180 - angle_difference_2)
+    bottom_mask = generatePattern13(angle_difference_2, 360 - angle_difference_2)
+    top_mask = generatePattern17(-180 + angle_difference_2, 180 - angle_difference_2)
 
     inner_color = "green"
     horizontal_inner_color = inner_color
