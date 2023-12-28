@@ -68,7 +68,7 @@ class GlitchHandler:
             horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 5)
 
 
-def generateAngles(spacing, angle_width, start_angle=0, end_angle=360, shift = 0):
+def generateAngles(spacing, angle_width, start_angle=0, end_angle=360, shift=0):
     angle_to_add = start_angle + 0.5 * angle_width
     result = []
     while angle_to_add < end_angle + 0.5 * angle_width:
@@ -206,6 +206,112 @@ def generatePattern17(start_angle, end_angle):
     return result
 
 
+def generateSpikes1(start_angle, end_angle):
+    half_angle = abs(end_angle - start_angle) / 2
+    result = [(start_angle + half_angle, 40, 0.15),
+              (start_angle + half_angle, 30, -0.05),
+              (start_angle + half_angle, 15, -0.15),
+              (start_angle + half_angle, 2, 0.2)]
+    return result
+
+
+def generateSpikes2(start_angle, end_angle):
+    third_angle = abs(end_angle - start_angle) / 3
+    result = [(start_angle + third_angle, 20, 0.05),
+              (end_angle - third_angle, 20, -0.05)]
+    return result
+
+
+def generateSpikes3(start_angle, end_angle):
+    third_angle = abs(end_angle - start_angle) / 3
+    half_angle = abs(end_angle - start_angle) / 2
+    result = [(start_angle + third_angle, 20, 0.05),
+              (start_angle + half_angle, 20, -0.05),
+              (end_angle - third_angle, 20, 0.05)]
+    return result
+
+
+def generateSpikes4(start_angle, end_angle):
+    quarter_angle = abs(end_angle - start_angle) / 4
+    third_angle = abs(end_angle - start_angle) / 3
+    result = [(start_angle + quarter_angle, 20, 0.1),
+              (start_angle + third_angle, 5, -0.1),
+              (end_angle - third_angle, 5, -0.1),
+              (end_angle - quarter_angle, 20, 0.1)]
+    return result
+
+
+def generateSpikes5(start_angle, end_angle):
+    quarter_angle = abs(end_angle - start_angle) / 4
+    third_angle = abs(end_angle - start_angle) / 3
+    result = [(start_angle + quarter_angle, 5, -0.1),
+              (start_angle + third_angle, 5, -0.1),
+              (end_angle - third_angle, 5, -0.1),
+              (end_angle - quarter_angle, 5, -0.1)]
+    return result
+
+
+def generateSpikes6(start_angle, end_angle):
+    quarter_angle = abs(end_angle - start_angle) / 4
+    third_angle = abs(end_angle - start_angle) / 3
+    half_angle = abs(end_angle - start_angle) / 2
+    result = [(start_angle + quarter_angle, 10, -0.1),
+              (start_angle + third_angle, 10, -0.1),
+              (start_angle + half_angle, 10, -0.15),
+              (end_angle - third_angle, 10, -0.1),
+              (end_angle - quarter_angle, 10, -0.1)]
+    return result
+
+
+def generateSpikes7(start_angle, end_angle):
+    half_angle = abs(end_angle - start_angle) / 2
+    result = [(start_angle + half_angle, half_angle, -0.15)]
+    return result
+
+
+def generateSpikes8(start_angle, end_angle):
+    half_angle = abs(end_angle - start_angle) / 2
+    result = [(start_angle + half_angle, half_angle, 0.15)]
+    return result
+
+
+def generateSpikes9(start_angle, end_angle):
+    half_angle = abs(end_angle - start_angle) / 2
+    quarter_angle = abs(end_angle - start_angle) / 4
+    third_angle = abs(end_angle - start_angle) / 3
+    result = [(start_angle + third_angle, quarter_angle, 0.05),
+              (start_angle + quarter_angle, 5, -0.1),
+              (start_angle + half_angle, third_angle, 0.15),
+              (start_angle + half_angle, 5, -0.15),
+              (end_angle - quarter_angle, 5, -0.1),
+              (end_angle - third_angle, quarter_angle, 0.05)]
+    return result
+
+
+def generateSpikes10(start_angle, end_angle):
+    half_angle = abs(end_angle - start_angle) / 2
+    quarter_angle = abs(end_angle - start_angle) / 4
+
+    result = [(start_angle + quarter_angle, 10, 0.15),
+              (start_angle + half_angle, 10, -0.15),
+              (end_angle - quarter_angle, 10, 0.15)]
+    return result
+
+
+def getRandomSpikeFunction():
+    random_num = random.randint(1, 10)
+    result = globals()[f"generateSpikes{random_num}"]
+    print("Generated spike ", random_num)
+    return result
+
+
+def getRandomPatternFunction():
+    random_num = random.randint(1, 17)
+    result = globals()[f"generatePattern{random_num}"]
+    print("Generated pattern ", random_num)
+    return result
+
+
 if __name__ == '__main__':
     pygame.init()
     screen_width = 1280
@@ -235,20 +341,26 @@ if __name__ == '__main__':
     angle_difference_2 = int(math.degrees(math.acos(circle_shift_vertical / circle_radius_vertical)))
     line_type = "double_line"
 
-    right_spikes = [(180+angle_difference + 10, 5, -0.2), (270, 10, -0.25)]
-    left_spikes = [(80, 2, -0.10), (80, 8, 0.20)]
-    bottom_spikes = []
-    top_spikes = []
+    spike_func_horizontal = getRandomSpikeFunction()
+    spike_func_vertical = getRandomSpikeFunction()
+
+    right_spikes = spike_func_horizontal(180 + angle_difference, 360 - angle_difference)
+    left_spikes = spike_func_horizontal(angle_difference, 180 - angle_difference)
+    bottom_spikes = spike_func_vertical(-angle_difference_2, angle_difference_2)
+    top_spikes = spike_func_vertical(180 - angle_difference_2, 180 + angle_difference_2)
 
     line_thickness = 3
     outer_line_thickness = line_thickness
     inner_line_thickness = line_thickness + 2
 
-    right_mask = generatePattern1(-angle_difference, 180 + angle_difference)
-    left_mask = generatePattern1(180 - angle_difference, 360 + angle_difference)
+    pattern_func_horizontal = getRandomPatternFunction()
+    pattern_func_vertical = getRandomPatternFunction()
 
-    bottom_mask = generatePattern13(angle_difference_2, 360 - angle_difference_2)
-    top_mask = generatePattern17(-180 + angle_difference_2, 180 - angle_difference_2)
+    right_mask = pattern_func_horizontal(-angle_difference, 180 + angle_difference)
+    left_mask = pattern_func_horizontal(180 - angle_difference, 360 + angle_difference)
+
+    bottom_mask = pattern_func_vertical(angle_difference_2, 360 - angle_difference_2)
+    top_mask = pattern_func_vertical(-180 + angle_difference_2, 180 - angle_difference_2)
 
     inner_color = "green"
     horizontal_inner_color = inner_color
@@ -258,36 +370,45 @@ if __name__ == '__main__':
     horizontal_outer_color = outer_color
     vertical_outer_color = outer_color + "_2"
 
-    #top_mask.extend(generateAngles(115, 40, -180 + angle_difference_2, 180 - angle_difference_2))
-    #top_mask = [] # generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2)
+    # top_mask.extend(generateAngles(115, 40, -180 + angle_difference_2, 180 - angle_difference_2))
+    # top_mask = [] # generateAngles(15, 10, -180 + angle_difference_2, 180 - angle_difference_2)
 
     # Right Circle
     crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_horizontal,
                                 begin_angle=180 + angle_difference,
                                 end_angle=360 - angle_difference,
-                                base_color=horizontal_inner_color, center=(center_x + circle_shift_horizontal, center_y),
+                                base_color=horizontal_inner_color,
+                                center=(center_x + circle_shift_horizontal, center_y),
                                 spikes=right_spikes)
-    crystalograph.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius_horizontal, begin_angle=-angle_difference,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius_horizontal,
+                                begin_angle=-angle_difference,
                                 end_angle=180 + angle_difference,
-                                base_color=horizontal_outer_color, center=(center_x + circle_shift_horizontal, center_y),
-                                mask = right_mask)
+                                base_color=horizontal_outer_color,
+                                center=(center_x + circle_shift_horizontal, center_y),
+                                mask=right_mask)
 
     # Left Circle
-    crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_horizontal, begin_angle=angle_difference,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_horizontal,
+                                begin_angle=angle_difference,
                                 end_angle=180 - angle_difference,
-                                base_color=horizontal_inner_color, center=(center_x - circle_shift_horizontal, center_y),
-                                spikes = left_spikes)
-    crystalograph.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius_horizontal, begin_angle=180 - angle_difference,
+                                base_color=horizontal_inner_color,
+                                center=(center_x - circle_shift_horizontal, center_y),
+                                spikes=left_spikes)
+    crystalograph.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius_horizontal,
+                                begin_angle=180 - angle_difference,
                                 end_angle=360 + angle_difference,
-                                base_color=horizontal_outer_color, center=(center_x - circle_shift_horizontal, center_y),
+                                base_color=horizontal_outer_color,
+                                center=(center_x - circle_shift_horizontal, center_y),
                                 mask=left_mask)
 
     # Bottom Circle
-    crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_vertical, begin_angle=-angle_difference_2,
+    crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_vertical,
+                                begin_angle=-angle_difference_2,
                                 end_angle=angle_difference_2,
                                 base_color=vertical_inner_color, center=(center_x, center_y + circle_shift_vertical),
-                                spikes = bottom_spikes)
-    crystalograph.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius_vertical, begin_angle=angle_difference_2,
+                                spikes=bottom_spikes)
+    crystalograph.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius_vertical,
+                                begin_angle=angle_difference_2,
                                 end_angle=360 - angle_difference_2,
                                 base_color=vertical_outer_color, center=(center_x, center_y + circle_shift_vertical),
                                 mask=bottom_mask)
@@ -296,7 +417,7 @@ if __name__ == '__main__':
     crystalograph.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius_vertical,
                                 begin_angle=180 - angle_difference_2, end_angle=180 + angle_difference_2,
                                 base_color=vertical_inner_color, center=(center_x, center_y - circle_shift_vertical),
-                                spikes = top_spikes)
+                                spikes=top_spikes)
     crystalograph.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius_vertical,
                                 begin_angle=-180 + angle_difference_2, end_angle=180 - angle_difference_2,
                                 base_color=vertical_outer_color, center=(center_x, center_y - circle_shift_vertical),
