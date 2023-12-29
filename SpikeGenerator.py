@@ -6,8 +6,6 @@ from sql_app.schemas import Target
 
 
 class SpikeGenerator:
-    def __init__(self):
-        pass
 
     @staticmethod
     def generateSpikes1(start_angle, end_angle):

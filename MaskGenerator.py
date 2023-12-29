@@ -4,8 +4,6 @@ from sql_app.schemas import Action
 
 
 class MaskGenerator:
-    def __init__(self):
-        pass
 
     @staticmethod
     def getRandomMaskFunction():
