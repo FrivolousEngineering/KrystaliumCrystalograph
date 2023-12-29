@@ -16,13 +16,14 @@ import Crystalograph
 
 
 def drawVerticalPatterns(crystalograph, inner_color, outer_color, inner_line_thickness, outer_line_thickness,
-                         circle_radius, circle_shift, line_type="double_line"):
+                         circle_radius, circle_shift, action_type: str = "random", target_type: str = "random",
+                         line_type="double_line"):
     angle_difference = int(math.degrees(math.acos(circle_shift / circle_radius)))
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    spike_func = SpikeGenerator.getRandomSpikeFunction()
-    mask_func = MaskGenerator.getRandomMaskFunction()
+    spike_func = SpikeGenerator.getSpikeFunctionByTarget(target_type)
+    mask_func = MaskGenerator.getMaskFunctionByAction(action_type)
 
     bottom_spikes = spike_func(-angle_difference, angle_difference)
     top_spikes = spike_func(180 - angle_difference, 180 + angle_difference)
@@ -52,16 +53,17 @@ def drawVerticalPatterns(crystalograph, inner_color, outer_color, inner_line_thi
 
 
 def drawHorizontalPatterns(crystalograph, inner_color, outer_color, inner_line_thickness, outer_line_thickness,
-                           circle_radius, circle_shift, line_type="double_line"):
+                           circle_radius, circle_shift, action_type: str = "random", target_type: str = "random",
+                           line_type="double_line"):
     angle_difference = int(math.degrees(math.asin(circle_shift / circle_radius)))
     center_x = int(screen_width / 2)
     center_y = int(screen_height / 2)
 
-    spike_func = SpikeGenerator.getRandomSpikeFunction()
-    pattern_func = MaskGenerator.getRandomMaskFunction()
+    spike_func = SpikeGenerator.getSpikeFunctionByTarget(target_type)
+    mask_func = MaskGenerator.getMaskFunctionByAction(action_type)
 
-    right_mask = pattern_func(-angle_difference, 180 + angle_difference)
-    left_mask = pattern_func(180 - angle_difference, 360 + angle_difference)
+    right_mask = mask_func(-angle_difference, 180 + angle_difference)
+    left_mask = mask_func(180 - angle_difference, 360 + angle_difference)
 
     right_spikes = spike_func(180 + angle_difference, 360 - angle_difference)
     left_spikes = spike_func(angle_difference, 180 - angle_difference)

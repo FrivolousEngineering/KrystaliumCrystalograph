@@ -151,6 +151,8 @@ class MaskGenerator:
 
     @staticmethod
     def getMaskFunctionByAction(action):
+        if action == "random":
+            return MaskGenerator.getRandomMaskFunction()
         action_list = list(Action)
         result = getattr(MaskGenerator, f"generateMask{action_list.index(action.title()) + 1}")
         return result

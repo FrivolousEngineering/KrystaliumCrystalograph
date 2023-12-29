@@ -107,6 +107,8 @@ class SpikeGenerator:
 
     @staticmethod
     def getSpikeFunctionByTarget(target):
+        if target == "random":
+            return SpikeGenerator.getRandomSpikeFunction()
         target_list = list(Target)
         result = getattr(SpikeGenerator, f"generateSpikes{target_list.index(target.title()) + 1}")
         return result
