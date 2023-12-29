@@ -7,6 +7,7 @@ from Fader import Fader
 from GlitchHandler import GlitchHandler
 from MaskGenerator import MaskGenerator
 from SpikeGenerator import SpikeGenerator
+from sql_app.schemas import Action, Target
 
 with contextlib.redirect_stdout(None):
     import pygame
@@ -97,6 +98,21 @@ def drawHorizontalPatterns(crystalograph, inner_color, outer_color, inner_line_t
                                 mask=left_mask)
 
 
+def addLinesToCrystalopgrah(crystalograph, action_index, target_index):
+    circle_shift = 125
+    circle_radius = 200
+    line_thickness = 3
+    outer_line_thickness = line_thickness
+    inner_line_thickness = line_thickness + 2
+
+    print("Positive:")
+    drawHorizontalPatterns(crystalograph, "green", "blue", inner_line_thickness, outer_line_thickness, circle_radius,
+                           circle_shift, list(Action)[action_index], list(Target)[target_index])
+    print("Negative:")
+    drawVerticalPatterns(crystalograph, "green_2", "blue_2", inner_line_thickness, outer_line_thickness, circle_radius,
+                         circle_shift, list(Action)[action_index], list(Target)[target_index])
+
+
 def addRandomLinesToCrystalograph(crystalograph):
     circle_shift = 125
     circle_radius = 200
@@ -128,6 +144,8 @@ if __name__ == '__main__':
     crystalograph.setup()
     fader = Fader()
     screen_shake = 0
+    current_action_index = 0
+    current_target_index = 0
 
     while running:
         crystalograph.createEmptyImage((screen_width, screen_height))
@@ -154,6 +172,30 @@ if __name__ == '__main__':
                 crystalograph.clearLinesToDraw()
                 addRandomLinesToCrystalograph(crystalograph)
                 crystalograph.setup()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_a:
+                print("Increasing action")
+                crystalograph.clearLinesToDraw()
+                current_action_index += 1
+                if current_action_index > 16:
+                    current_action_index = 0
+                addLinesToCrystalopgrah(crystalograph, target_index=current_target_index, action_index=current_action_index)
+                crystalograph.setup()
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
+                print("Increasing action")
+                crystalograph.clearLinesToDraw()
+                current_target_index += 1
+                if current_target_index > 9:
+                    current_target_index = 0
+                addLinesToCrystalopgrah(crystalograph, target_index=current_target_index,
+                                        action_index=current_action_index)
+                crystalograph.setup()
+
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                print("Saving")
+                import cv2
+                cv2.imwrite(f"action_{list(Action)[current_action_index-1].value}_target_{list(Target)[current_target_index].value}.png", image)
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_b:
                 glitch_handler.glitch()
