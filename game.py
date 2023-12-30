@@ -1,5 +1,6 @@
 import contextlib
 import random
+import requests
 
 # This suppresses the `Hello from pygame` message.
 from Fader import Fader
@@ -43,115 +44,143 @@ def addRandomLinesToCrystalograph(crystalograph):
                                        circle_shift)
 
 
-def onCardLost(card):
-    print("Card lost", card)
+class PygameWrapper:
+    def __init__(self):
+        pygame.init()
+        self._screen_width = 1280
+        self._screen_height = 720
+        self._screen = pygame.display.set_mode((self._screen_width, self._screen_height))
+        self._clock = pygame.time.Clock()
+        self._running = True
+        self._crystalograph = Crystalograph.Crystalograph()
+        self._glitch_handler = GlitchHandler()
+        self._rfid_controller = RFIDController(self._onCardDetected, self._onCardLost)
+        self._rfid_controller.start()
 
+        self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
 
-def onCardDetected(card):
-    print("Card Detected", card)
+        addRandomLinesToCrystalograph(self._crystalograph)
+
+        self._crystalograph.setup()
+        self._fader = Fader()
+        self._screen_shake = 0
+        self._current_action_index = 0
+        self._current_target_index = 0
+
+    def _onCardLost(self, rfid_id):
+        print("Card lost", rfid_id)
+
+    def _onCardDetected(self, rfid_id):
+
+        print("Card Detected", rfid_id)
+        r = requests.get(f"http://127.0.0.1:8000/samples/{rfid_id}")
+
+        if r.status_code == 200:
+            self._crystalograph.clearLinesToDraw()
+
+            data = r.json()
+
+            circle_shift = 125
+            circle_radius = 200
+            line_thickness = 3
+            outer_line_thickness = line_thickness
+            inner_line_thickness = line_thickness + 2
+
+            self._crystalograph.drawHorizontalPatterns("green", "blue", inner_line_thickness, outer_line_thickness,
+                                                 circle_radius,
+                                                 circle_shift, data["positive_action"], data["positive_target"])
+            self._crystalograph.drawVerticalPatterns("green_2", "blue_2", inner_line_thickness, outer_line_thickness, circle_radius,
+                                       circle_shift, data["negative_action"], data["negative_target"])
+
+            self._crystalograph.setup()
+        print(r.json())
+
+    def run(self):
+        while self._running:
+            self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
+            image = self._crystalograph.draw()
+            self._screen.fill((0, 0, 0))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self._running = False
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self._running = False
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                    pygame.display.toggle_fullscreen()
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_x:
+                    self._fader.fadeIn()
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+                    self._fader.fadeOut()
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
+                    self._screen_shake += 40
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+                    self._crystalograph.clearLinesToDraw()
+                    addRandomLinesToCrystalograph(self._crystalograph)
+                    self._crystalograph.setup()
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_a:
+                    print("Increasing action")
+                    self._crystalograph.clearLinesToDraw()
+                    self._current_action_index += 1
+                    if self._current_action_index > 16:
+                        self._current_action_index = 0
+                    addLinesToCrystalopgrah(self._crystalograph, target_index=self._current_target_index,
+                                            action_index=self._current_action_index)
+                    self._crystalograph.setup()
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
+                    print("Increasing action")
+                    self._crystalograph.clearLinesToDraw()
+                    self._current_target_index += 1
+                    if self._current_target_index > 9:
+                        self._current_target_index = 0
+                    addLinesToCrystalopgrah(self._crystalograph, target_index=self._current_target_index,
+                                            action_index=self._current_action_index)
+                    self._crystalograph.setup()
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                    print("Saving")
+                    import cv2
+
+                    cv2.imwrite(
+                        f"action_{list(Action)[self._current_action_index - 1].value}_target_{list(Target)[self._current_target_index].value}.png",
+                        image)
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_b:
+                    self._glitch_handler.glitch()
+
+            if self._screen_shake:
+                screen_displacement_x = random.random() * 4 - 2
+                screen_displacement_y = random.random() * 4 - 2
+                self._screen_shake -= 1
+            else:
+                screen_displacement_x = 0
+                screen_displacement_y = 0
+
+            self._fader.update()
+            self._glitch_handler.update()
+
+            # This is where we insert the numpy array.
+            # Because pygame and numpy use different coordinate systems,
+            # the numpy image has to be flipped and rotated, before being blit.
+            img = pygame.surfarray.make_surface(np.fliplr(np.rot90(image, k=-1)))
+            self._screen.blit(img, (screen_displacement_x, screen_displacement_y))
+
+            self._fader.draw(self._screen)
+            self._glitch_handler.draw(self._screen)
+
+            pygame.display.flip()
+            self._crystalograph.update()
+            self._clock.tick()
+            print(self._clock.get_fps())
+        quit()
+
 
 
 if __name__ == '__main__':
-    pygame.init()
-    screen_width = 1280
-    screen_height = 720
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    clock = pygame.time.Clock()
-    running = True
-    crystalograph = Crystalograph.Crystalograph()
-    glitch_handler = GlitchHandler()
-    rfid_controller = RFIDController(onCardDetected, onCardLost)
-    rfid_controller.start()
+    wrapper = PygameWrapper()
 
-    crystalograph.createEmptyImage((screen_width, screen_height))
-
-    addRandomLinesToCrystalograph(crystalograph)
-
-    crystalograph.setup()
-    fader = Fader()
-    screen_shake = 0
-    current_action_index = 0
-    current_target_index = 0
-
-    while running:
-        crystalograph.createEmptyImage((screen_width, screen_height))
-        image = crystalograph.draw()
-        screen.fill((0, 0, 0))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
-                pygame.display.toggle_fullscreen()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_x:
-                fader.fadeIn()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
-                fader.fadeOut()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
-                screen_shake += 40
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_n:
-                crystalograph.clearLinesToDraw()
-                addRandomLinesToCrystalograph(crystalograph)
-                crystalograph.setup()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_a:
-                print("Increasing action")
-                crystalograph.clearLinesToDraw()
-                current_action_index += 1
-                if current_action_index > 16:
-                    current_action_index = 0
-                addLinesToCrystalopgrah(crystalograph, target_index=current_target_index,
-                                        action_index=current_action_index)
-                crystalograph.setup()
-
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
-                print("Increasing action")
-                crystalograph.clearLinesToDraw()
-                current_target_index += 1
-                if current_target_index > 9:
-                    current_target_index = 0
-                addLinesToCrystalopgrah(crystalograph, target_index=current_target_index,
-                                        action_index=current_action_index)
-                crystalograph.setup()
-
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
-                print("Saving")
-                import cv2
-
-                cv2.imwrite(
-                    f"action_{list(Action)[current_action_index - 1].value}_target_{list(Target)[current_target_index].value}.png",
-                    image)
-
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_b:
-                glitch_handler.glitch()
-
-        if screen_shake:
-            screen_displacement_x = random.random() * 4 - 2
-            screen_displacement_y = random.random() * 4 - 2
-            screen_shake -= 1
-        else:
-            screen_displacement_x = 0
-            screen_displacement_y = 0
-
-        fader.update()
-        glitch_handler.update()
-
-        # This is where we insert the numpy array.
-        # Because pygame and numpy use different coordinate systems,
-        # the numpy image has to be flipped and rotated, before being blit.
-        img = pygame.surfarray.make_surface(np.fliplr(np.rot90(image, k=-1)))
-        screen.blit(img, (screen_displacement_x, screen_displacement_y))
-
-        fader.draw(screen)
-        glitch_handler.draw(screen)
-
-        pygame.display.flip()
-        crystalograph.update()
-        clock.tick()
-        # print(clock.get_fps())
-
-    pygame.quit()
+    wrapper.run()

@@ -8,3 +8,4 @@ pydantic
 uvicorn
 PygameShader
 pyserial
+requests
