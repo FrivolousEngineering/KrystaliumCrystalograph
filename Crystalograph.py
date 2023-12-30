@@ -102,8 +102,6 @@ class Crystalograph:
             self._image = line.draw(self._image)
 
         # Draw a white line over it for the highlight
-        #for line in self._lines_to_draw:
-        #    self._image = line.drawSimple(self._image, override_color="white", thickness_modifier=0.3, noise_modifier=1.2)
         kernel = np.ones((5, 5), np.uint8)
 
         # Convert to black & white image
@@ -113,6 +111,7 @@ class Crystalograph:
         # We want to do higlights. Whooo
         cv2.erode(highlights, kernel, highlights)
 
+        # Merge em together again
         image_with_background = cv2.addWeighted(background, 1, self._image, 1, 0)
 
         self._counter += 1
