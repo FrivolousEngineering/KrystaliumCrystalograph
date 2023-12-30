@@ -92,14 +92,13 @@ class Crystalograph:
         return self._base_layer_image
 
     def draw(self) -> np.ndarray:
-
         # Cache the background image that gives the glow
         background = self._drawBaseImage(self._counter).copy()
 
         self.createEmptyImage((self._width, self._height))
         # Draw the lines again so that there is a difference between the blur and the line itself
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image)
+            line.draw(self._image)
 
         # Draw a white line over it for the highlight
         kernel = np.ones((5, 5), np.uint8)

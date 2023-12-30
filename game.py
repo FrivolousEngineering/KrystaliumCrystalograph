@@ -68,7 +68,6 @@ class PygameWrapper:
         self._current_action_index = 0
         self._current_target_index = 0
 
-
     def _onCardLost(self, rfid_id):
         print("Card lost", rfid_id)
 
@@ -170,6 +169,9 @@ class PygameWrapper:
             # the numpy image has to be flipped and rotated, before being blit.
             img = pygame.surfarray.make_surface(np.fliplr(np.rot90(image, k=-1)))
             self._screen.blit(img, (screen_displacement_x, screen_displacement_y))
+
+            # This is optionally sliiightly faster.
+            #pygame.surfarray.blit_array(self._screen, np.fliplr(np.rot90(image, k=-1)))
 
             self._fader.draw(self._screen)
             self._glitch_handler.draw(self._screen)
