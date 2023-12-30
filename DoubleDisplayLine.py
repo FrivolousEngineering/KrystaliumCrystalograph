@@ -33,14 +33,10 @@ class DoubleDisplayLine(DisplayLine):
 
             segments = np.ma.clump_unmasked(masked_top_array)
 
-            final_points_top = []
-            final_points_bottom = []
-            for segment in segments:
-                # The segments are based on the flattened array. By just dividing it by 2, we get the right result
-                # Previously I would flatten & reshape, but that is *much* more expensive...
-                modified_segment = slice(int(segment.start / 2), int(segment.stop / 2))
-                final_points_top.append(masked_top_array[modified_segment])
-                final_points_bottom.append(masked_bottom_array[modified_segment])
+            final_points_top = [masked_top_array[int(segment.start / 2):int(segment.stop / 2)] for segment in segments]
+            final_points_bottom = [masked_bottom_array[int(segment.start / 2):int(segment.stop / 2)] for segment in
+                                   segments]
+
         else:
             final_points_top = [pts_top]
             final_points_bottom = [pts_bottom]

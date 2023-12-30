@@ -60,6 +60,7 @@ class PygameWrapper:
         self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
 
         addRandomLinesToCrystalograph(self._crystalograph)
+        #self._crystalograph.addLineToDraw("double_line", "green", 50, 2, (int(self._screen_width/2), int(self._screen_height/2)), 0, 360, mask = [(90, 10), (270, 10)])
 
         self._crystalograph.setup()
         self._fader = Fader()
