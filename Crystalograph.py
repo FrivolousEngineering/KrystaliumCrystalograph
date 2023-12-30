@@ -2,12 +2,15 @@ from typing import Tuple, Optional, List
 
 import numpy as np
 import cv2
+import math
 
 from ColorController import ColorController
 from DisplayLine import DisplayLine, Spike
 
 # Typing helpers
 from DoubleDisplayLine import DoubleDisplayLine
+from MaskGenerator import MaskGenerator
+from SpikeGenerator import SpikeGenerator
 
 Image = np.ndarray
 Point = Tuple[int, int]
@@ -26,7 +29,8 @@ class Crystalograph:
         self._color_controller = ColorController()
 
     def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point,
-                      begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None, mask: Optional[List] = None):
+                      begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None,
+                      mask: Optional[List] = None):
         data = locals()
         del data["self"]
         if line_type == "line":
@@ -65,7 +69,8 @@ class Crystalograph:
     def draw(self) -> np.ndarray:
         # Draw all the lines
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, thickness_modifier=2, noise_modifier=0, override_color="pale_" + line._color_name)
+            self._image = line.draw(self._image, thickness_modifier=2, noise_modifier=0,
+                                    override_color="pale_" + line._color_name)
 
         # Some nice blurring
         self.applyBlooming(gaussian_ksize=25, blur_ksize=25)
@@ -89,6 +94,86 @@ class Crystalograph:
 
     def update(self) -> None:
         self._color_controller.update()
+
+    def drawHorizontalPatterns(self, inner_color, outer_color, inner_line_thickness, outer_line_thickness,
+                               circle_radius, circle_shift, action_type: str = "random", target_type: str = "random",
+                               line_type="double_line"):
+        angle_difference = int(math.degrees(math.asin(circle_shift / circle_radius)))
+        center_x = int(self._width / 2)
+        center_y = int(self._height / 2)
+
+        spike_func = SpikeGenerator.getSpikeFunctionByTarget(target_type)
+        mask_func = MaskGenerator.getMaskFunctionByAction(action_type)
+
+        right_mask = mask_func(-angle_difference, 180 + angle_difference)
+        left_mask = mask_func(180 - angle_difference, 360 + angle_difference)
+
+        right_spikes = spike_func(180 + angle_difference, 360 - angle_difference)
+        left_spikes = spike_func(angle_difference, 180 - angle_difference)
+
+        # Right Circle
+        self.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius,
+                           begin_angle=180 + angle_difference,
+                           end_angle=360 - angle_difference,
+                           base_color=inner_color,
+                           center=(center_x + circle_shift, center_y),
+                           spikes=right_spikes)
+        self.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius,
+                           begin_angle=-angle_difference,
+                           end_angle=180 + angle_difference,
+                           base_color=outer_color,
+                           center=(center_x + circle_shift, center_y),
+                           mask=right_mask)
+
+        # Left Circle
+        self.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius,
+                           begin_angle=angle_difference,
+                           end_angle=180 - angle_difference,
+                           base_color=inner_color,
+                           center=(center_x - circle_shift, center_y),
+                           spikes=left_spikes)
+        self.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius,
+                           begin_angle=180 - angle_difference,
+                           end_angle=360 + angle_difference,
+                           base_color=outer_color,
+                           center=(center_x - circle_shift, center_y),
+                           mask=left_mask)
+
+    def drawVerticalPatterns(self, inner_color, outer_color, inner_line_thickness, outer_line_thickness,
+                             circle_radius, circle_shift, action_type: str = "random", target_type: str = "random",
+                             line_type="double_line"):
+        angle_difference = int(math.degrees(math.acos(circle_shift / circle_radius)))
+        center_x = int(self._width / 2)
+        center_y = int(self._height / 2)
+
+        spike_func = SpikeGenerator.getSpikeFunctionByTarget(target_type)
+        mask_func = MaskGenerator.getMaskFunctionByAction(action_type)
+
+        bottom_spikes = spike_func(-angle_difference, angle_difference)
+        top_spikes = spike_func(180 - angle_difference, 180 + angle_difference)
+
+        bottom_mask = mask_func(angle_difference, 360 - angle_difference)
+        top_mask = mask_func(-180 + angle_difference, 180 - angle_difference)
+
+        self.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius,
+                           begin_angle=-angle_difference,
+                           end_angle=angle_difference,
+                           base_color=inner_color, center=(center_x, center_y + circle_shift),
+                           spikes=bottom_spikes)
+        self.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius,
+                           begin_angle=angle_difference,
+                           end_angle=360 - angle_difference,
+                           base_color=outer_color, center=(center_x, center_y + circle_shift),
+                           mask=bottom_mask)
+
+        self.addLineToDraw(line_type=line_type, thickness=outer_line_thickness, radius=circle_radius,
+                           begin_angle=180 - angle_difference, end_angle=180 + angle_difference,
+                           base_color=inner_color, center=(center_x, center_y - circle_shift),
+                           spikes=top_spikes)
+        self.addLineToDraw(line_type=line_type, thickness=inner_line_thickness, radius=circle_radius,
+                           begin_angle=-180 + angle_difference, end_angle=180 - angle_difference,
+                           base_color=outer_color, center=(center_x, center_y - circle_shift),
+                           mask=top_mask)
 
 
 if __name__ == '__main__':
