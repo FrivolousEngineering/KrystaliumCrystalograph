@@ -68,6 +68,7 @@ class PygameWrapper:
         self._current_action_index = 0
         self._current_target_index = 0
 
+
     def _onCardLost(self, rfid_id):
         print("Card lost", rfid_id)
 
@@ -98,7 +99,7 @@ class PygameWrapper:
 
     def run(self):
         while self._running:
-            self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
+
             image = self._crystalograph.draw()
             self._screen.fill((0, 0, 0))
 

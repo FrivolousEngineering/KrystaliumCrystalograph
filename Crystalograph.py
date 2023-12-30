@@ -92,25 +92,37 @@ class Crystalograph:
         return self._base_layer_image
 
     def draw(self) -> np.ndarray:
-        # Cache the background image that gives the glow
-        self._image = self._drawBaseImage(self._counter).copy()
 
+        # Cache the background image that gives the glow
+        background = self._drawBaseImage(self._counter).copy()
+
+        self.createEmptyImage((self._width, self._height))
         # Draw the lines again so that there is a difference between the blur and the line itself
         for line in self._lines_to_draw:
             self._image = line.draw(self._image)
 
         # Draw a white line over it for the highlight
-        for line in self._lines_to_draw:
-            self._image = line.draw(self._image, override_color="white", thickness_modifier=0.1, noise_modifier=1.2)
+        #for line in self._lines_to_draw:
+        #    self._image = line.drawSimple(self._image, override_color="white", thickness_modifier=0.3, noise_modifier=1.2)
+        kernel = np.ones((5, 5), np.uint8)
 
-        self.applyBlooming(self._image, 0, 3)
-        # self.drawTargetLines()
+        # Convert to black & white image
+        highlights = cv2.cvtColor(self._image, cv2.COLOR_BGR2GRAY)
+        highlights = cv2.cvtColor(highlights, cv2.COLOR_GRAY2RGB)
+
+        # We want to do higlights. Whooo
+        cv2.erode(highlights, kernel, highlights)
+
+        image_with_background = cv2.addWeighted(background, 1, self._image, 1, 0)
 
         self._counter += 1
 
         if self._counter > NUM_BACKGROUND_IMAGES:
             self._counter = 0
-        return self._image
+        result = cv2.addWeighted(highlights, 3, image_with_background, 1, 0)
+
+        self.applyBlooming(result, gaussian_ksize=0, blur_ksize=3)
+        return result
 
     def setup(self) -> None:
         for line in self._lines_to_draw:
