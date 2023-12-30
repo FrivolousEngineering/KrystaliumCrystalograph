@@ -4,6 +4,7 @@ import requests
 
 # This suppresses the `Hello from pygame` message.
 from Fader import Fader
+
 from GlitchHandler import GlitchHandler
 from RFIDController import RFIDController
 from sql_app.schemas import Action, Target

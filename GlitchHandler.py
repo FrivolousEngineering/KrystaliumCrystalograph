@@ -1,5 +1,11 @@
 import random
-from PygameShader.shader import horizontal_glitch
+
+try:
+    from PygameShader.shader import horizontal_glitch
+    shaders_enabled = True
+except:
+    shaders_enabled = False
+    print("SHADERS DISABLED")
 
 
 class GlitchHandler:
@@ -20,4 +26,5 @@ class GlitchHandler:
 
     def draw(self, _screen) -> None:
         if self._glitch_counter:
-            horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 5)
+            if shaders_enabled:
+                horizontal_glitch(_screen, 0.01, 0.08, self._glitch_counter % 5)
