@@ -90,7 +90,7 @@ class Crystalograph:
         # Some nice blurring
         self.applyBlooming(self._base_layer_image, gaussian_ksize=25, blur_ksize=25)
         return self._base_layer_image
-    
+
     def draw(self) -> np.ndarray:
         # Cache the background image that gives the glow
         background = self._drawBaseImage(self._counter)

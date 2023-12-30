@@ -48,14 +48,14 @@ class DoubleDisplayLine(DisplayLine):
         if alpha < 1.0:
             overlay = image.copy()
             for bottom_points, top_points in zip(final_points_bottom, final_points_top):
-                pts_bottom = numpy.flipud(bottom_points)
+                pts_bottom = bottom_points[::-1]
                 pts = numpy.concatenate((top_points, pts_bottom))
                 cv2.fillPoly(overlay, [pts], color_to_use)
             image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
         else:
             # Actually draw them
             for bottom_points, top_points in zip(final_points_bottom, final_points_top):
-                pts_bottom = numpy.flipud(bottom_points)
+                pts_bottom = bottom_points[::-1]
                 pts = numpy.concatenate((top_points, pts_bottom))
                 image = cv2.fillPoly(image, [pts], color_to_use)
         return image
