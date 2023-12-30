@@ -33,27 +33,17 @@ class DoubleDisplayLine(DisplayLine):
 
             segments = np.ma.clump_unmasked(masked_top_array)
 
-            # We need to flatten the array, because clump_unmask doesn't work on anything but 1d arrays.
-            # When we add the points to the final list we can reshape them again...
-            flattend_masked_bottom_array = masked_bottom_array.flatten()
-            flattend_masked_top_array = masked_top_array.flatten()
-
             final_points_top = []
             final_points_bottom = []
             for segment in segments:
-                final_points_top.append(np.reshape(flattend_masked_top_array[segment], (-1, 2)))
-                final_points_bottom.append(np.reshape(flattend_masked_bottom_array[segment], (-1, 2)))
+                # The segments are based on the flattened array. By just dividing it by 2, we get the right result
+                # Previously I would flatten & reshape, but that is *much* more expensive...
+                modified_segment = slice(int(segment.start / 2), int(segment.stop / 2))
+                final_points_top.append(masked_top_array[modified_segment])
+                final_points_bottom.append(masked_bottom_array[modified_segment])
         else:
-            #pts = pts.reshape((-1, 1, 2))
             final_points_top = [pts_top]
             final_points_bottom = [pts_bottom]
-
-
-        # Due to winding order, we need to flip the bottom points again
-        #pts_bottom = numpy.flipud(pts_bottom)
-        #pts = numpy.append(pts_top, pts_bottom)
-
-        #pts = pts.reshape((-1, 1, 2))
 
         color_to_use = self._color_controller.getColor(self._color_name)
         if override_color is not None:
@@ -63,17 +53,13 @@ class DoubleDisplayLine(DisplayLine):
             overlay = image.copy()
             for bottom_points, top_points in zip(final_points_bottom, final_points_top):
                 pts_bottom = numpy.flipud(bottom_points)
-                pts = numpy.append(top_points, pts_bottom)
-
-                pts = pts.reshape((-1, 1, 2))
+                pts = numpy.concatenate((top_points, pts_bottom))
                 cv2.fillPoly(overlay, [pts], color_to_use)
             image = cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
         else:
             # Actually draw them
             for bottom_points, top_points in zip(final_points_bottom, final_points_top):
                 pts_bottom = numpy.flipud(bottom_points)
-                pts = numpy.append(top_points, pts_bottom)
-
-                pts = pts.reshape((-1, 1, 2))
+                pts = numpy.concatenate((top_points, pts_bottom))
                 image = cv2.fillPoly(image, [pts], color_to_use)
         return image
