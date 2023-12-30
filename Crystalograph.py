@@ -73,9 +73,9 @@ class Crystalograph:
     def applyBlooming(self, target_image, gaussian_ksize: int = 9, blur_ksize: int = 5) -> None:
         # Provide some blurring to image, to create some bloom.
         if gaussian_ksize > 0:
-            cv2.GaussianBlur(self._image, (gaussian_ksize, gaussian_ksize), 0, dst=self._image)
+            cv2.GaussianBlur(target_image, (gaussian_ksize, gaussian_ksize), 0, dst=target_image)
         if blur_ksize > 0:
-            cv2.blur(self._image, ksize=(blur_ksize, blur_ksize), dst=self._image)
+            cv2.blur(target_image, ksize=(blur_ksize, blur_ksize), dst=target_image)
 
     @cache
     def _drawBaseImage(self, variation):
