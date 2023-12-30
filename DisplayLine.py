@@ -151,6 +151,7 @@ class DisplayLine:
                 mask[start: end] = True
         return pts[mask]
 
+    @cache
     def generateModifiedRadius(self, radius: int) -> np.ndarray:
         pts = np.empty(self._num_segments)
         pts.fill(radius)
@@ -254,7 +255,6 @@ class DisplayLine:
 
         # Combine x and y coordinates into a single NumPy array.
         pts = np.column_stack((circle_x, circle_y))
-        pts = np.array(pts, np.int32)
         if noise != 0:
             noise_multiplier = self.generateNoiseMultiplierForCircle(self._num_segments, noise,
                                                                      min(int(self._num_segments / 8), 5),
