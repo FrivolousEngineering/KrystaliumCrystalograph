@@ -6,6 +6,7 @@ import random
 from Fader import Fader
 from GlitchHandler import GlitchHandler
 from MaskGenerator import MaskGenerator
+from RFIDController import RFIDController
 from SpikeGenerator import SpikeGenerator
 from sql_app.schemas import Action, Target
 
@@ -127,6 +128,14 @@ def addRandomLinesToCrystalograph(crystalograph):
                          circle_shift)
 
 
+def onCardLost(card):
+    print("Card lost", card)
+
+
+def onCardDetected(card):
+    print("Card Detected", card)
+
+
 if __name__ == '__main__':
     pygame.init()
     screen_width = 1280
@@ -136,6 +145,8 @@ if __name__ == '__main__':
     running = True
     crystalograph = Crystalograph.Crystalograph()
     glitch_handler = GlitchHandler()
+    rfid_controller = RFIDController(onCardDetected, onCardLost)
+    rfid_controller.start()
 
     crystalograph.createEmptyImage((screen_width, screen_height))
 
@@ -190,7 +201,6 @@ if __name__ == '__main__':
                 addLinesToCrystalopgrah(crystalograph, target_index=current_target_index,
                                         action_index=current_action_index)
                 crystalograph.setup()
-
 
             if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
                 print("Saving")
