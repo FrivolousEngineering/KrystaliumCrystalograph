@@ -4,7 +4,6 @@ import requests
 
 # This suppresses the `Hello from pygame` message.
 from Fader import Fader
-
 from GlitchHandler import GlitchHandler
 from RFIDController import RFIDController
 from sql_app.schemas import Action, Target
@@ -39,10 +38,10 @@ def addRandomLinesToCrystalograph(crystalograph):
     inner_line_thickness = line_thickness + 2
     print("Positive:")
     crystalograph.drawHorizontalPatterns("green", "blue", inner_line_thickness, outer_line_thickness, circle_radius,
-                                         circle_shift)
+                                         circle_shift, "Expanding", "Flesh")
     print("Negative:")
     crystalograph.drawVerticalPatterns("green_2", "blue_2", inner_line_thickness, outer_line_thickness, circle_radius,
-                                       circle_shift)
+                                       circle_shift, "Heating", "Krystal")
 
 
 class PygameWrapper:

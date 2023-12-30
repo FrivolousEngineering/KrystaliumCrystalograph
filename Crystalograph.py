@@ -7,6 +7,8 @@ import math
 from ColorController import ColorController
 from DisplayLine import DisplayLine, Spike
 
+from functools import cache
+
 # Typing helpers
 from DoubleDisplayLine import DoubleDisplayLine
 from MaskGenerator import MaskGenerator
@@ -17,6 +19,7 @@ Point = Tuple[int, int]
 Color = Tuple[int, int, int]
 
 NUM_SEGMENTS_PER_LENGTH = 0.4
+NUM_BACKGROUND_IMAGES = 48
 
 
 class Crystalograph:
@@ -27,6 +30,10 @@ class Crystalograph:
         self._height = 0
         self._lines_to_draw = []
         self._color_controller = ColorController()
+
+        # Speed option. Keep the base layer in memory so a re-draw isn't needed.
+        self._base_layer_image: Optional[np.ndarray] = None
+        self._counter = 0  # Used to trick the drawBackground cache into giving different images
 
     def addLineToDraw(self, line_type: str, base_color: str, radius: int, thickness: int, center: Point,
                       begin_angle: int, end_angle: int, spikes: Optional[List[Spike]] = None,
@@ -42,6 +49,10 @@ class Crystalograph:
         self._image = np.zeros((*size[::-1], 3), dtype=np.uint8)
         self._height, self._width = self._image.shape[:2]
         self._center = (int(self._width / 2), int(self._height / 2))
+        self._base_layer_image = None
+
+    def _createBaseImage(self, size: Tuple[int, int]) -> None:
+        self._base_layer_image = np.zeros((*size[::-1], 3), dtype=np.uint8)
 
     def clearLinesToDraw(self):
         self._lines_to_draw = []
@@ -59,21 +70,30 @@ class Crystalograph:
         cv2.line(self._image, (int(width / 2), 0), (int(width / 2), height), line_color, 1)
         cv2.line(self._image, (0, int(height / 2)), (width, int(height / 2)), line_color, 1)
 
-    def applyBlooming(self, gaussian_ksize: int = 9, blur_ksize: int = 5) -> None:
+    def applyBlooming(self, target_image, gaussian_ksize: int = 9, blur_ksize: int = 5) -> None:
         # Provide some blurring to image, to create some bloom.
         if gaussian_ksize > 0:
             cv2.GaussianBlur(self._image, (gaussian_ksize, gaussian_ksize), 0, dst=self._image)
         if blur_ksize > 0:
             cv2.blur(self._image, ksize=(blur_ksize, blur_ksize), dst=self._image)
 
-    def draw(self) -> np.ndarray:
-        # Draw all the lines
+    @cache
+    def _drawBaseImage(self, variation):
+        if self._base_layer_image is not None:
+            return self._base_layer_image
+
+        self._createBaseImage((self._width, self._height))
         for line in self._lines_to_draw:
-            self._image = line.draw(self._image, thickness_modifier=2, noise_modifier=0,
+            self._base_layer_image = line.draw(self._image, thickness_modifier=2, noise_modifier=0,
                                     override_color="pale_" + line._color_name)
 
         # Some nice blurring
-        self.applyBlooming(gaussian_ksize=25, blur_ksize=25)
+        self.applyBlooming(self._base_layer_image, gaussian_ksize=25, blur_ksize=25)
+        return self._base_layer_image
+
+    def draw(self) -> np.ndarray:
+        # Cache the background image that gives the glow
+        self._image = self._drawBaseImage(self._counter).copy()
 
         # Draw the lines again so that there is a difference between the blur and the line itself
         for line in self._lines_to_draw:
@@ -83,14 +103,21 @@ class Crystalograph:
         for line in self._lines_to_draw:
             self._image = line.draw(self._image, override_color="white", thickness_modifier=0.1, noise_modifier=1.2)
 
-        self.applyBlooming(0, 3)
+        self.applyBlooming(self._image, 0, 3)
         # self.drawTargetLines()
+
+        self._counter += 1
+
+        if self._counter > NUM_BACKGROUND_IMAGES:
+            self._counter = 0
         return self._image
 
     def setup(self) -> None:
         for line in self._lines_to_draw:
             line.setColorController(self._color_controller)
             line.setup()
+        self._base_layer_image = None
+        self._drawBaseImage.cache_clear()
 
     def update(self) -> None:
         self._color_controller.update()
