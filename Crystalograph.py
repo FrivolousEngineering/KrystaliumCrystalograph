@@ -90,10 +90,10 @@ class Crystalograph:
         # Some nice blurring
         self.applyBlooming(self._base_layer_image, gaussian_ksize=25, blur_ksize=25)
         return self._base_layer_image
-
+    
     def draw(self) -> np.ndarray:
         # Cache the background image that gives the glow
-        background = self._drawBaseImage(self._counter).copy()
+        background = self._drawBaseImage(self._counter)
 
         self.createEmptyImage((self._width, self._height))
         # Draw the lines again so that there is a difference between the blur and the line itself
