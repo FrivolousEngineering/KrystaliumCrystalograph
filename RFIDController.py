@@ -7,14 +7,14 @@ import time
 class RFIDController:
     def __init__(self, on_card_detected_callback, on_card_lost_callback, baud_rate = 9600):
         # Handle listening to serial.
-        self._serial_listen_thread = threading.Thread(target=self._handleSerial)
-        self._serial_listen_thread.daemon = True
+        self._serial_listen_thread = threading.Thread(target=self._handleSerial, daemon=True)
         self._baud_rate = baud_rate
         self._serial = None
         self._on_card_detected_callback = on_card_detected_callback
         self._on_card_lost_callback = on_card_lost_callback
         self._detected_card = None
         self._recreate_serial_timer = None
+        self._serial_recreate_time = 5
 
     def getDetectedCard(self):
         return self._detected_card
@@ -43,9 +43,14 @@ class RFIDController:
                     card_id = line.replace("Tag lost: ", "")
                     self._detected_card = None
                     self._on_card_lost_callback(card_id)
-
+            except serial.SerialException:
+                logging.warning("Previously working serial has stopped working, try to re-create!")
+                self._serial = None
+                # Try to re-create it after a few seconds
+                self._recreate_serial_timer = threading.Timer(self._serial_recreate_time, self._createSerial)
+                self._recreate_serial_timer.start()
             except Exception as e:
-                logging.error(f"Serial broke with exception {e}")
+                logging.error(f"Serial broke with exception of type {type(e)}: {e}")
                 time.sleep(0.1)  # Prevent error spam.
 
     def _startSerialThread(self) -> None:
@@ -53,6 +58,13 @@ class RFIDController:
 
     def _createSerial(self) -> None:
         logging.info("Attempting to create serial")
+        try:
+            self._serial_listen_thread.join()  # Ensure that previous thread has closed
+            self._serial_listen_thread = threading.Thread(target=self._handleSerial, daemon=True)
+        except RuntimeError:
+            # If the thread hasn't started before it will cause a runtime. Ignore that.
+            pass
+
         for i in range(0, 10):
             try:
                 port = f"/dev/ttyUSB{i}"
@@ -75,7 +87,7 @@ class RFIDController:
         else:
             logging.warning("Unable to create serial. Attempting again in a few seconds.")
             # Check again after a bit of time has passed
-            self._recreate_serial_timer = threading.Timer(30, self._createSerial)
+            self._recreate_serial_timer = threading.Timer(self._serial_recreate_time, self._createSerial)
             self._recreate_serial_timer.start()
 
 
