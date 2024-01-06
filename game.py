@@ -51,7 +51,7 @@ class PygameWrapper:
         self._crystalograph = Crystalograph.Crystalograph()
         self._glitch_handler = GlitchHandler()
         self._rfid_controller = RFIDController(self._onCardDetected, self._onCardLost)
-        #self._rfid_controller.start()
+        self._rfid_controller.start()
 
         self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
 
@@ -174,6 +174,8 @@ class PygameWrapper:
             pygame.display.flip()
             self._crystalograph.update()
             self._clock.tick()
+
+        self._rfid_controller.stop()
         quit()
 
 

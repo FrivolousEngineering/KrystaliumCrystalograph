@@ -26,6 +26,7 @@ class RFIDController:
         self._on_card_detected_callback = on_card_detected_callback
         self._on_card_lost_callback = on_card_lost_callback
         self._detected_card = None
+        self._recreate_serial_timer = None
 
     def getDetectedCard(self):
         return self._detected_card
@@ -33,6 +34,11 @@ class RFIDController:
     def start(self) -> None:
         # TODO: Should probably handle starting it multiple times?
         self._createSerial()
+
+    def stop(self):
+        self._serial = None
+        if self._recreate_serial_timer:
+            self._recreate_serial_timer.cancel()
 
     def _handleSerial(self):
         logging.info("Starting serial thread")
@@ -81,6 +87,7 @@ class RFIDController:
         else:
             logging.warning("Unable to create serial. Attempting again in a few seconds.")
             # Check again after a bit of time has passed
-            threading.Timer(30, self._createSerial).start()
+            self._recreate_serial_timer = threading.Timer(30, self._createSerial)
+            self._recreate_serial_timer.start()
 
 
