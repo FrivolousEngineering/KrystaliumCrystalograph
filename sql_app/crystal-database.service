@@ -1,0 +1,15 @@
+[Unit]
+Description=CrystalDatabase
+After=network.target
+
+[Service]
+Type=simple
+User=jaime
+WorkingDirectory=/home/jaime/Development/KrystaliumCrystalograph/
+ExecStart=uvicorn sql_app.main:app
+ExecReload=/bin/kill -HUP ${MAINPID}
+RestartSec=1
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
