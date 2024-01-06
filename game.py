@@ -22,10 +22,8 @@ def addLinesToCrystalopgrah(crystalograph, action_index, target_index):
     outer_line_thickness = line_thickness
     inner_line_thickness = line_thickness + 2
 
-    print("Positive:")
     crystalograph.drawHorizontalPatterns("green", "blue", inner_line_thickness, outer_line_thickness, circle_radius,
                                          circle_shift, list(Action)[action_index], list(Target)[target_index])
-    print("Negative:")
     crystalograph.drawVerticalPatterns("green_2", "blue_2", inner_line_thickness, outer_line_thickness, circle_radius,
                                        circle_shift, list(Action)[action_index], list(Target)[target_index])
 
@@ -36,10 +34,8 @@ def addRandomLinesToCrystalograph(crystalograph):
     line_thickness = 3
     outer_line_thickness = line_thickness
     inner_line_thickness = line_thickness + 2
-    print("Positive:")
     crystalograph.drawHorizontalPatterns("green", "blue", inner_line_thickness, outer_line_thickness, circle_radius,
                                          circle_shift, "Expanding", "Flesh")
-    print("Negative:")
     crystalograph.drawVerticalPatterns("green_2", "blue_2", inner_line_thickness, outer_line_thickness, circle_radius,
                                        circle_shift, "Heating", "Krystal")
 
@@ -60,7 +56,6 @@ class PygameWrapper:
         self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
 
         addRandomLinesToCrystalograph(self._crystalograph)
-        #self._crystalograph.addLineToDraw("double_line", "green", 50, 2, (int(self._screen_width/2), int(self._screen_height/2)), 0, 360, mask = [(90, 10), (270, 10)])
 
         self._crystalograph.setup()
         self._fader = Fader()
