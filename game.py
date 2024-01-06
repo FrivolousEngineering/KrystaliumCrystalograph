@@ -59,6 +59,8 @@ class PygameWrapper:
 
         addRandomLinesToCrystalograph(self._crystalograph)
 
+        self._base_server_url: str = "http://127.0.0.1:8000"
+
         self._crystalograph.setup()
         self._fader = Fader()
         self._screen_shake = 0
@@ -87,7 +89,7 @@ class PygameWrapper:
     def _onCardDetected(self, rfid_id):
         logging.info(f"Card detected {rfid_id}")
         try:
-            r = requests.get(f"http://127.0.0.1:8000/samples/{rfid_id}")
+            r = requests.get(f"{self._base_server_url}/samples/{rfid_id}")
         except requests.exceptions.ConnectionError:
             logging.error("Failed to connect to the server")
             return
