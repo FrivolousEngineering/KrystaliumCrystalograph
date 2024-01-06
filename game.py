@@ -57,8 +57,6 @@ class PygameWrapper:
 
         self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
 
-        addRandomLinesToCrystalograph(self._crystalograph)
-
         self._base_server_url: str = "http://127.0.0.1:8000"
 
         self._crystalograph.setup()
@@ -86,6 +84,10 @@ class PygameWrapper:
     def _onCardLost(self, rfid_id):
         logging.info(f"Card lost {rfid_id}")
 
+        # We only fade out, as we don't want the pattern to disapear right away
+
+        self._fader.fadeOut()
+
     def _onCardDetected(self, rfid_id):
         logging.info(f"Card detected {rfid_id}")
         try:
@@ -112,6 +114,8 @@ class PygameWrapper:
                                        circle_shift, data["negative_action"], data["negative_target"])
 
             self._crystalograph.setup()
+            # We have something to show, fade in the new pattern!
+            self._fader.fadeIn()
         else:
             logging.warning(f"Failed to get remote info for {rfid_id}, got status code {r.status_code}")
 
