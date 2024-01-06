@@ -45,7 +45,7 @@ class PygameWrapper:
         pygame.init()
         self._screen_width = 1280
         self._screen_height = 720
-        self._screen = pygame.display.set_mode((self._screen_width, self._screen_height))
+        self._screen = pygame.display.set_mode((self._screen_width, self._screen_height), pygame.FULLSCREEN)
         self._clock = pygame.time.Clock()
         self._running = True
         self._crystalograph = Crystalograph.Crystalograph()
