@@ -1,6 +1,8 @@
 import contextlib
 import random
 import requests
+import logging
+import sys
 
 # This suppresses the `Hello from pygame` message.
 from Fader import Fader
@@ -45,7 +47,7 @@ class PygameWrapper:
         pygame.init()
         self._screen_width = 1280
         self._screen_height = 720
-        self._screen = pygame.display.set_mode((self._screen_width, self._screen_height), pygame.FULLSCREEN)
+        self._screen = pygame.display.set_mode((self._screen_width, self._screen_height))
         self._clock = pygame.time.Clock()
         self._running = True
         self._crystalograph = Crystalograph.Crystalograph()
@@ -62,13 +64,28 @@ class PygameWrapper:
         self._screen_shake = 0
         self._current_action_index = 0
         self._current_target_index = 0
+        self._setupLogging()
+
+    @staticmethod
+    def _setupLogging() -> None:
+        root = logging.getLogger()
+
+        # Kick out the default handler
+        root.removeHandler(root.handlers[0])
+
+        root.setLevel(logging.DEBUG)
+
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
 
     def _onCardLost(self, rfid_id):
-        print("Card lost", rfid_id)
+        logging.info(f"Card lost {rfid_id}")
 
     def _onCardDetected(self, rfid_id):
-
-        print("Card Detected", rfid_id)
+        logging.info(f"Card detected {rfid_id}")
         r = requests.get(f"http://127.0.0.1:8000/samples/{rfid_id}")
 
         if r.status_code == 200:
@@ -89,10 +106,11 @@ class PygameWrapper:
                                        circle_shift, data["negative_action"], data["negative_target"])
 
             self._crystalograph.setup()
-        print(r.json())
+        else:
+            logging.warning(f"Failed to get remote info for {rfid_id}, got status code {r.status_code}")
 
     def run(self):
-        print("Display has started")
+        logging.info("Display has started")
         while self._running:
             image = self._crystalograph.draw()
             self._screen.fill((0, 0, 0))
@@ -118,7 +136,6 @@ class PygameWrapper:
                     addRandomLinesToCrystalograph(self._crystalograph)
                     self._crystalograph.setup()
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_a:
-                    print("Increasing action")
                     self._crystalograph.clearLinesToDraw()
                     self._current_action_index += 1
                     if self._current_action_index > 16:
@@ -128,7 +145,6 @@ class PygameWrapper:
                     self._crystalograph.setup()
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
-                    print("Increasing action")
                     self._crystalograph.clearLinesToDraw()
                     self._current_target_index += 1
                     if self._current_target_index > 9:
@@ -138,7 +154,6 @@ class PygameWrapper:
                     self._crystalograph.setup()
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
-                    print("Saving")
                     import cv2
 
                     cv2.imwrite(
@@ -177,7 +192,6 @@ class PygameWrapper:
 
         self._rfid_controller.stop()
         quit()
-
 
 
 if __name__ == '__main__':

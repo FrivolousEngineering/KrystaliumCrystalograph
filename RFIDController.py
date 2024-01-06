@@ -4,18 +4,6 @@ import threading
 import time
 
 
-import sys
-
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
-
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-root.addHandler(handler)
-
-
 class RFIDController:
     def __init__(self, on_card_detected_callback, on_card_lost_callback, baud_rate = 9600):
         # Handle listening to serial.
