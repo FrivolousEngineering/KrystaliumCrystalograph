@@ -109,6 +109,23 @@ class PygameWrapper:
             # Set the data for next update draw loop to be updated. Since this is called outside of the main thread,
             # we do it like this to prevent threading issues.
             self._new_sample_to_draw = data
+        elif r.status_code == 404:
+            # It's not a raw sample, find out if it's a refined one
+            try:
+                r = requests.get(f"{self._base_server_url}/refined/{rfid_id}")
+            except requests.exceptions.ConnectionError:
+                logging.error("Failed to connect to the server")
+                return
+            if r.status_code == 200:
+                self._crystalograph.clearLinesToDraw()
+
+                data = r.json()
+                # Set the data for next update draw loop to be updated. Since this is called outside of the main thread,
+                # we do it like this to prevent threading issues.
+                self._new_sample_to_draw = data
+            else:
+
+                logging.warning(f"Failed to get remote info for {rfid_id}, got status code {r.status_code}")
         else:
             logging.warning(f"Failed to get remote info for {rfid_id}, got status code {r.status_code}")
 
@@ -134,14 +151,25 @@ class PygameWrapper:
                     inner_color = f"dark_{inner_color}"
                     outer_color = f"dark_{outer_color}"
 
+                if "vulgarity" in self._new_sample_to_draw:  # It's a raw sample
+                    horizontal_action = self._new_sample_to_draw.get("positive_action")
+                    horizontal_target = self._new_sample_to_draw.get("positive_target")
+
+                    vertical_action = self._new_sample_to_draw.get("negative_action")
+                    vertical_target = self._new_sample_to_draw.get("negative_target")
+                else:  # It's a refined sample
+                    horizontal_action = self._new_sample_to_draw.get("primary_action")
+                    horizontal_target = self._new_sample_to_draw.get("primary_target")
+
+                    vertical_action = self._new_sample_to_draw.get("secondary_action")
+                    vertical_target = self._new_sample_to_draw.get("secondary_target")
+
                 self._crystalograph.drawHorizontalPatterns(inner_color, outer_color, inner_line_thickness,
                                                            outer_line_thickness, circle_radius, circle_shift,
-                                                           self._new_sample_to_draw["positive_action"],
-                                                           self._new_sample_to_draw["positive_target"])
+                                                           horizontal_action, horizontal_target)
                 self._crystalograph.drawVerticalPatterns(f"{inner_color}_2", f"{outer_color}_2", inner_line_thickness,
                                                          outer_line_thickness, circle_radius,
-                                                         circle_shift, self._new_sample_to_draw["negative_action"],
-                                                         self._new_sample_to_draw["negative_target"])
+                                                         circle_shift, vertical_action, vertical_target)
 
                 self._crystalograph.setup()
                 # We have something to show, fade in the new pattern!
