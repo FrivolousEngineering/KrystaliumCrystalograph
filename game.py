@@ -70,6 +70,8 @@ class PygameWrapper:
         self._current_target_index = 0
         self._setupLogging()
 
+        self._new_sample_to_draw = None
+
     @staticmethod
     def _setupLogging() -> None:
         root = logging.getLogger()
@@ -104,29 +106,38 @@ class PygameWrapper:
             self._crystalograph.clearLinesToDraw()
 
             data = r.json()
-
-            circle_shift = 125
-            circle_radius = 200
-            line_thickness = 3
-            outer_line_thickness = line_thickness
-            inner_line_thickness = line_thickness + 2
-
-            self._crystalograph.drawHorizontalPatterns("green", "blue", inner_line_thickness, outer_line_thickness,
-                                                 circle_radius,
-                                                 circle_shift, data["positive_action"], data["positive_target"])
-            self._crystalograph.drawVerticalPatterns("green_2", "blue_2", inner_line_thickness, outer_line_thickness, circle_radius,
-                                       circle_shift, data["negative_action"], data["negative_target"])
-
-            self._crystalograph.setup()
-            # We have something to show, fade in the new pattern!
-            self._fader.fadeIn()
+            # Set the data for next update draw loop to be updated. Since this is called outside of the main thread,
+            # we do it like this to prevent threading issues.
+            self._new_sample_to_draw = data
         else:
             logging.warning(f"Failed to get remote info for {rfid_id}, got status code {r.status_code}")
 
     def run(self):
         logging.info("Display has started")
-        pygame.mouse.set_visible(False  )
+        pygame.mouse.set_visible(False)
         while self._running:
+            if self._new_sample_to_draw:
+                circle_shift = 125
+                circle_radius = 200
+                line_thickness = 3
+                outer_line_thickness = line_thickness
+                inner_line_thickness = line_thickness + 2
+
+                self._crystalograph.drawHorizontalPatterns("green", "blue", inner_line_thickness, outer_line_thickness,
+                                                           circle_radius,
+                                                           circle_shift, self._new_sample_to_draw["positive_action"],
+                                                           self._new_sample_to_draw["positive_target"])
+                self._crystalograph.drawVerticalPatterns("green_2", "blue_2", inner_line_thickness,
+                                                         outer_line_thickness, circle_radius,
+                                                         circle_shift, self._new_sample_to_draw["negative_action"],
+                                                         self._new_sample_to_draw["negative_target"])
+
+                self._crystalograph.setup()
+                # We have something to show, fade in the new pattern!
+                self._fader.fadeIn()
+
+                self._new_sample_to_draw = None
+
             image = self._crystalograph.draw()
             self._screen.fill((0, 0, 0))
 
