@@ -16,6 +16,12 @@ class ColorController:
         self._colors["pale_blue"] = FlickeringColor(128, 128, 255)
         self._colors["pale_blue_2"] = FlickeringColor(128, 128, 255)
         self._colors["pale_green"] = FlickeringColor(128, 255, 128)
+        self._colors["dark_green"] = FlickeringColor(0, 255, 0, min_intensity=100, absolute_min_intensity=64, max_intensity=128)
+        self._colors["dark_blue"] = FlickeringColor(0, 0, 255, min_intensity=100, absolute_min_intensity=64, max_intensity=128)
+        self._colors["dark_green_2"] = FlickeringColor(0, 255, 0, min_intensity=100, absolute_min_intensity=64,
+                                                     max_intensity=128)
+        self._colors["dark_blue_2"] = FlickeringColor(0, 0, 255, min_intensity=100, absolute_min_intensity=64,
+                                                    max_intensity=128)
         self._colors["pale_red"] = FlickeringColor(255, 128, 128)
         self._colors["pale_red_2"] = FlickeringColor(255, 128, 128)
         self._colors["blue_3"] = FlickeringColor(0, 0, 255)
@@ -28,7 +34,7 @@ class ColorController:
     def getColor(self, color_name: str) -> Color:
         if color_name.lower() in self._colors:
             return self._colors[color_name.lower()].getRGB()
-        return 255, 255, 255
+        return 0, 0, 0
 
     def update(self):
         for flickering_color in self._colors.values():

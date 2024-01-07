@@ -18,13 +18,14 @@ class FlickerState(Enum):
 
 
 class FlickeringColor:
-    def __init__(self, r: int, g: int, b: int, should_animate: bool = True) -> None:
+    def __init__(self, r: int, g: int, b: int, min_intensity: int = 200, absolute_min_intensity: int = 128,
+                 max_intensity: int = 255, should_animate: bool = True) -> None:
 
         # Chance that the flicker will go to absolute_min_intensity instead of min_intensity
         self._drop_bottom_chance_percent = 10
-        self._min_intensity = 200
-        self._absolute_min_intensity = 128
-        self._max_intensity = 255
+        self._min_intensity = min_intensity
+        self._absolute_min_intensity = absolute_min_intensity
+        self._max_intensity = max_intensity
 
         self._down_min_msecs = 20
         self._down_max_msecs = 250
@@ -98,8 +99,8 @@ class FlickeringColor:
             case FlickerState.DOWN | FlickerState.UP:
                 if current_time < self._flicker_start + self._flicker_msecs:
                     self.setFlicker(self.roundToInt(self._intensity_start + (
-                                (self._intensity_end - self._intensity_start) * (
-                                    ((current_time - self._flicker_start) * 1.0) / self._flicker_msecs))))
+                            (self._intensity_end - self._intensity_start) * (
+                            ((current_time - self._flicker_start) * 1.0) / self._flicker_msecs))))
                 else:
                     self.setFlicker(self._intensity_end)
                     if self._flicker_state == FlickerState.DOWN:
