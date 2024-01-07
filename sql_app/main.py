@@ -43,6 +43,8 @@ def checkUniqueRFID(db, rfid_id: str):
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
+    # This function is required to locally host the swagger API. This means that the docs will work without internet
+    # connection
     return get_swagger_ui_html(
         openapi_url=app.openapi_url,
         title=app.title + " - Swagger UI",
@@ -54,18 +56,20 @@ async def custom_swagger_ui_html():
 
 @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
 async def swagger_ui_redirect():
+    # This function is required to locally host the swagger API. This means that the docs will work without internet
+    # connection
     return get_swagger_ui_oauth2_redirect_html()
 
 
 @app.get("/redoc", include_in_schema=False)
 async def redoc_html():
+    # This function is required to locally host the swagger API. This means that the docs will work without internet
+    # connection
     return get_redoc_html(
         openapi_url=app.openapi_url,
         title=app.title + " - ReDoc",
         redoc_js_url="/static/redoc.standalone.js",
     )
-
-
 
 
 @app.get("/samples/", response_model=list[schemas.KrystaliumSample])
@@ -100,12 +104,19 @@ def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session
 
 @app.post("/sample/random/", response_model=schemas.KrystaliumSample, responses={400: {"model": BadRequestError}})
 def create_random_krystalium_sample(sample: schemas.RandomKrystaliumSampleCreate, db: Session = Depends(get_db)):
+    """
+    Create random raw sample(s) of Krystalium.
+    If the num_samples is larger than 1, you can't set the RFID, as each sample needs a unique one. The num_samples
+    parameter is just there for debug purposes. If it is set, all the RFID tags will get a random rfid tag.
+
+    If the vulgarity is not set, it will create a completely random sample. If it is set, its guaranteed to create a
+    sample of that Vulgarity (or multiple samples if the num samples is set)
+    """
     if sample.num_samples > 1 and sample.rfid_id is not None:
         raise HTTPException(status_code=400, detail=f"Impossible to create multiple RFID samples with the same RFID id")
 
     if sample.num_samples == 1:
         checkUniqueRFID(db, str(sample.rfid_id))
-
         return crud.createRandomSample(db, rfid_id = str(sample.rfid_id), vulgarity = sample.vulgarity)
     else:
         result = None
