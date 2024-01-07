@@ -220,5 +220,34 @@ def getSampleByRFID(db: Session, rfid_id: str) -> Optional[models.KrystaliumSamp
     return db.query(models.KrystaliumSample).filter(models.KrystaliumSample.rfid_id == rfid_id).first()
 
 
-def getRefineKrystaliumdByRFID(db: Session, rfid_id: str) -> Optional[models.KrystaliumSample]:
+def deleteSampleByRFID(db: Session, rfid_id: str) -> bool:
+    """
+
+    :param db:
+    :param rfid_id: The RFID id of the sample that needs to be deleted
+    :return: True if it was able to delete it, false otherwise
+    """
+    sample = getSampleByRFID(db, rfid_id)
+    if sample:
+        db.delete(sample)
+        db.commit()
+        return True
+    return False
+
+
+def deleteRefinedKrystaliumByRFID(db: Session, rfid_id: str) -> bool:
+    """
+    :param db:
+    :param rfid_id: The RFID id of the refined Krystalium that needs to be deleted
+    :return: True if it was able to delete it, false otherwise
+    """
+    refined = getRefineKrystaliumByRFID(db, rfid_id)
+    if refined:
+        db.delete(refined)
+        db.commit()
+        return True
+    return False
+
+
+def getRefineKrystaliumByRFID(db: Session, rfid_id: str) -> Optional[models.KrystaliumSample]:
     return db.query(models.RefinedKrystalium).filter(models.RefinedKrystalium.rfid_id == rfid_id).first()

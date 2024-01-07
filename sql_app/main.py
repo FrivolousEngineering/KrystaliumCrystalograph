@@ -35,7 +35,7 @@ def checkUniqueRFID(db, rfid_id: str):
         raise HTTPException(status_code=400, detail=f"A Krystalium sample with the RFID id [{rfid_id}] has already been registered")
 
     # Check if the RFID is already used for a refined Krystalium
-    db_refined = crud.getRefineKrystaliumdByRFID(db, rfid_id=rfid_id)
+    db_refined = crud.getRefineKrystaliumByRFID(db, rfid_id=rfid_id)
     if db_refined:
         raise HTTPException(status_code=400,
                             detail=f"A refined Krystalium with the RFID id [{rfid_id}] has already been registered")
@@ -92,6 +92,17 @@ def get_krystalium_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     return db_sample
 
 
+@app.delete("/samples/{rfid_id}")
+def delete_krystalium_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
+    """
+    Get a single refined Krystalium by RFID. If it doesn't find anything, you might want to try checking if it's
+    a sample instead!
+    """
+    success = crud.deleteSampleByRFID(db, rfid_id=rfid_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Krystalium sample with RFID [{rfid_id}] was not found")
+
+
 @app.post("/samples/", response_model=schemas.KrystaliumSample, responses={400: {"model": BadRequestError}})
 def create_krystalium_sample(sample: schemas.KrystaliumSampleCreate, db: Session = Depends(get_db)):
     """
@@ -139,10 +150,21 @@ def get_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     Get a single refined Krystalium by RFID. If it doesn't find anything, you might want to try checking if it's
     a sample instead!
     """
-    db_refined = crud.getRefineKrystaliumdByRFID(db, rfid_id=rfid_id)
+    db_refined = crud.getRefineKrystaliumByRFID(db, rfid_id=rfid_id)
     if not db_refined:
         raise HTTPException(status_code=404, detail=f"Refined Krystalium with RFID [{rfid_id}] was not found")
     return db_refined
+
+
+@app.delete("/refined/{rfid_id}")
+def delete_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
+    """
+    Get a single refined Krystalium by RFID. If it doesn't find anything, you might want to try checking if it's
+    a sample instead!
+    """
+    success = crud.deleteRefinedKrystaliumByRFID(db, rfid_id=rfid_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Refined Krystalium with RFID [{rfid_id}] was not found")
 
 
 @app.post("/refined/", response_model=schemas.RefinedKrystalium, responses={400: {"model": BadRequestError}})
