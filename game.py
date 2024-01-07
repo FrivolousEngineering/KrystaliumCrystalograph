@@ -116,7 +116,8 @@ class PygameWrapper:
         logging.info("Display has started")
         pygame.mouse.set_visible(False)
         while self._running:
-            if self._new_sample_to_draw:
+            if self._new_sample_to_draw is not None and not self._fader.isFading():
+                # Only re-draw if we have a new sample, and we are done with any fade operation!
                 circle_shift = 125
                 circle_radius = 200
                 line_thickness = 3

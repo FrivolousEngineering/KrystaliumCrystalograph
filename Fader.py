@@ -6,12 +6,15 @@ with contextlib.redirect_stdout(None):
 
 class Fader:
     def __init__(self):
-        self._fading = "out"
+        self._fading = None
         self._alpha = 255
         sr = pygame.display.get_surface().get_rect()
         self._veil = pygame.Surface(sr.size)
         self._veil.fill((0, 0, 0))
         self._fader_speed = 3
+
+    def isFading(self):
+        return self._fading is not None
 
     def fadeOut(self):
         self._fading = "out"
@@ -32,9 +35,9 @@ class Fader:
             if self._alpha < 255:
                 self._alpha += self._fader_speed
 
-        if self._alpha < 0:
+        if self._alpha <= 0:
             self._fading = None
             self._alpha = 0
-        if self._alpha > 255:
+        if self._alpha >= 255:
             self._fading = None
             self._alpha = 255
