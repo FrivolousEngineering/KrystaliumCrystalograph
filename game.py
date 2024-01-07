@@ -121,6 +121,7 @@ class PygameWrapper:
 
     def run(self):
         logging.info("Display has started")
+        pygame.mouse.set_visible(False)
         while self._running:
             image = self._crystalograph.draw()
             self._screen.fill((0, 0, 0))
