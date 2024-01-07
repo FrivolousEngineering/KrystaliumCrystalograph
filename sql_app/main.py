@@ -136,6 +136,29 @@ def create_random_krystalium_sample(sample: schemas.RandomKrystaliumSampleCreate
         return result
 
 
+@app.post("/refined/random/", response_model=schemas.RefinedKrystalium, responses={400: {"model": BadRequestError}})
+def create_random_refined_krystalium(refined_create: schemas.RandomRefinedKrystaliumCreate, db: Session = Depends(get_db)):
+    """
+    Create random refined Krystalium.
+    If the num_samples is larger than 1, you can't set the RFID, as each sample needs a unique one. The num_samples
+    parameter is just there for debug purposes. If it is set, all the RFID tags will get a random rfid tag.
+
+    Note that the random purity is done by creating random samples. This means that a low purity is *much* more common
+    than a high one!
+    """
+    if refined_create.num_samples > 1 and refined_create.rfid_id is not None:
+        raise HTTPException(status_code=400, detail=f"Impossible to create multiple refined krystalium with the same RFID id")
+
+    if refined_create.num_samples == 1:
+        checkUniqueRFID(db, str(refined_create.rfid_id))
+        return crud.createRandomRefined(db, rfid_id = str(refined_create.rfid_id), purity = refined_create.purity)
+    else:
+        result = None
+        for i in range(0, refined_create.num_samples):
+            result = crud.createRandomRefined(db, rfid_id = str(uuid.uuid4()), purity = refined_create.purity)
+        return result
+
+
 @app.get("/refined/", response_model=list[schemas.RefinedKrystalium])
 def get_all_refined_krystalium(db: Session = Depends(get_db)):
     """

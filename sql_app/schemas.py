@@ -191,6 +191,15 @@ class RandomKrystaliumSampleCreate(BaseModel):
     num_samples: int = Field(1, description = "How many samples must be created. When this is set, rfid_id must be empty. This should only be used for debug purposes")
 
 
+class RandomRefinedKrystaliumCreate(BaseModel):
+    rfid_id: Optional[str] = Field(None,
+                                   description="The ID of the physical RFID in the sample. This can not be set when creating multiple samples")
+    purity: Optional[Purity] = Field(None,
+                                           description="The purity of the sample. If not set it will set it randomly")
+    num_samples: int = Field(1,
+                             description="How many samples must be created. When this is set, rfid_id must be empty. This should only be used for debug purposes")
+
+
 class BadRequestError(BaseModel):
     detail: str
 

@@ -161,10 +161,38 @@ def createInvariantActionPair():
     return result, result
 
 
-def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]):
-    db_sample = models.KrystaliumSample()
-    db_sample.rfid_id = rfid_id
+def createRandomRefined(db: Session, rfid_id: str, purity: Optional[Purity]):
+    db_refined = models.RefinedKrystalium()
 
+    if purity is None:
+        # In order to properly simulate the right distribution of purity, we generate two random samples and combine
+        # them.
+        positive_sample = _createRandomSample(vulgarity=None)
+        negative_sample = _createRandomSample(vulgarity=None)
+
+        db_refined.primary_action = positive_sample.positive_action
+        db_refined.primary_target = negative_sample.negative_target
+        db_refined.secondary_action = negative_sample.negative_action
+        db_refined.secondary_target = positive_sample.positive_target
+
+        db_refined.purity = Purity.getByScore(Vulgarity.getScore(positive_sample.vulgarity) + Vulgarity.getScore(negative_sample.vulgarity))
+    else:
+        db_refined.primary_action, db_refined.secondary_action = createRandomActionPair()
+        db_refined.primary_target, db_refined.secondary_target = createRandomTargetPair()
+        db_refined.purity = purity
+    db_refined.rfid_id = rfid_id
+    db.add(db_refined)
+    db.commit()
+    return db_refined
+
+
+def _createRandomSample(vulgarity: Optional[Vulgarity]) -> models.KrystaliumSample:
+    """
+    Create a random sample without adding it to the database or comitting it.
+    :param vulgarity: The vulgarity of the sample to create.
+    :return: The created sample
+    """
+    db_sample = models.KrystaliumSample()
     match vulgarity:
         case None:
             # Completely random
@@ -206,10 +234,19 @@ def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]
             db_sample.negative_target, db_sample.positive_target = generateConflictingTargetPair()
             db_sample.negative_action, db_sample.positive_action = generateConflictingActionPair()
 
-    db_sample.vulgarity = findVulgarityFromProperties(db_sample.positive_action, db_sample.negative_action, db_sample.positive_target,
+    db_sample.vulgarity = findVulgarityFromProperties(db_sample.positive_action, db_sample.negative_action,
+                                                      db_sample.positive_target,
                                                       db_sample.negative_target)
     if vulgarity is not None:
         assert db_sample.vulgarity == vulgarity, "Calculated vulgarity and provided vulgarity must be the same!"
+
+    return db_sample
+
+
+def createRandomSample(db: Session, rfid_id: str, vulgarity: Optional[Vulgarity]):
+    db_sample = _createRandomSample(vulgarity)
+    db_sample.rfid_id = rfid_id
+
     db.add(db_sample)
     db.commit()
     db.refresh(db_sample)
