@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
-from .schemas import BadRequestError
+from .schemas import BadRequestError, NotFoundError
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -92,7 +92,7 @@ def get_krystalium_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     return db_sample
 
 
-@app.delete("/samples/{rfid_id}")
+@app.delete("/samples/{rfid_id}", responses={404: {"model": NotFoundError}})
 def delete_krystalium_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     """
     Get a single refined Krystalium by RFID. If it doesn't find anything, you might want to try checking if it's
@@ -144,7 +144,7 @@ def get_all_refined_krystalium(db: Session = Depends(get_db)):
     return crud.getAllRefinedKrystalium(db)
 
 
-@app.get("/refined/{rfid_id}", response_model=schemas.RefinedKrystalium)
+@app.get("/refined/{rfid_id}", response_model=schemas.RefinedKrystalium, responses={404: {"model": NotFoundError}})
 def get_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     """
     Get a single refined Krystalium by RFID. If it doesn't find anything, you might want to try checking if it's
@@ -156,7 +156,7 @@ def get_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     return db_refined
 
 
-@app.delete("/refined/{rfid_id}")
+@app.delete("/refined/{rfid_id}", responses={404: {"model": NotFoundError}})
 def delete_refined_krystalium_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
     """
     Get a single refined Krystalium by RFID. If it doesn't find anything, you might want to try checking if it's
