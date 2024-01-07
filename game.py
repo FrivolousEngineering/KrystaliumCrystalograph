@@ -1,3 +1,4 @@
+import argparse
 import contextlib
 import random
 import requests
@@ -43,11 +44,14 @@ def addRandomLinesToCrystalograph(crystalograph):
 
 
 class PygameWrapper:
-    def __init__(self):
+    def __init__(self, fullscreen: bool = True):
         pygame.init()
         self._screen_width = 1280
         self._screen_height = 720
-        self._screen = pygame.display.set_mode((self._screen_width, self._screen_height))
+        if fullscreen:
+            self._screen = pygame.display.set_mode((self._screen_width, self._screen_height), pygame.FULLSCREEN)
+        else:
+            self._screen = pygame.display.set_mode((self._screen_width, self._screen_height))
         self._clock = pygame.time.Clock()
         self._running = True
         self._crystalograph = Crystalograph.Crystalograph()
@@ -121,7 +125,7 @@ class PygameWrapper:
 
     def run(self):
         logging.info("Display has started")
-        pygame.mouse.set_visible(False)
+        pygame.mouse.set_visible(False  )
         while self._running:
             image = self._crystalograph.draw()
             self._screen.fill((0, 0, 0))
@@ -206,6 +210,10 @@ class PygameWrapper:
 
 
 if __name__ == '__main__':
-    wrapper = PygameWrapper()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--windowed", action="store_true")
+
+    args = parser.parse_args()
+    wrapper = PygameWrapper(fullscreen = not args.windowed)
 
     wrapper.run()
