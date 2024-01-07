@@ -123,26 +123,26 @@ class PygameWrapper:
                 line_thickness = 3
                 outer_line_thickness = line_thickness
                 inner_line_thickness = line_thickness + 2
-                if not self._new_sample_to_draw["depleted"]:
-                    self._crystalograph.drawHorizontalPatterns("green", "blue", inner_line_thickness, outer_line_thickness,
-                                                               circle_radius,
-                                                               circle_shift, self._new_sample_to_draw["positive_action"],
-                                                               self._new_sample_to_draw["positive_target"])
-                    self._crystalograph.drawVerticalPatterns("green_2", "blue_2", inner_line_thickness,
-                                                             outer_line_thickness, circle_radius,
-                                                             circle_shift, self._new_sample_to_draw["negative_action"],
-                                                             self._new_sample_to_draw["negative_target"])
-                else:
-                    self._crystalograph.drawHorizontalPatterns("dark_green", "dark_blue", inner_line_thickness,
-                                                               outer_line_thickness,
-                                                               circle_radius,
-                                                               circle_shift,
-                                                               self._new_sample_to_draw["positive_action"],
-                                                               self._new_sample_to_draw["positive_target"])
-                    self._crystalograph.drawVerticalPatterns("dark_green_2", "dark_blue_2", inner_line_thickness,
-                                                             outer_line_thickness, circle_radius,
-                                                             circle_shift, self._new_sample_to_draw["negative_action"],
-                                                             self._new_sample_to_draw["negative_target"])
+
+                # If depleted is not set, it can be a refined sample
+                is_depleted = self._new_sample_to_draw.get("depleted", False)
+                inner_color = "green"
+                outer_color = "blue"
+
+                if is_depleted:
+                    # Sample is depleted, draw it with much darker colors
+                    inner_color = f"dark_{inner_color}"
+                    outer_color = f"dark_{outer_color}"
+
+                self._crystalograph.drawHorizontalPatterns(inner_color, outer_color, inner_line_thickness,
+                                                           outer_line_thickness, circle_radius, circle_shift,
+                                                           self._new_sample_to_draw["positive_action"],
+                                                           self._new_sample_to_draw["positive_target"])
+                self._crystalograph.drawVerticalPatterns(f"{inner_color}_2", f"{outer_color}_2", inner_line_thickness,
+                                                         outer_line_thickness, circle_radius,
+                                                         circle_shift, self._new_sample_to_draw["negative_action"],
+                                                         self._new_sample_to_draw["negative_target"])
+
                 self._crystalograph.setup()
                 # We have something to show, fade in the new pattern!
                 self._fader.fadeIn()
