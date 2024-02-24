@@ -241,3 +241,33 @@ def create_refined_crystalium_from_samples(creation_request: schemas.RefinedKrys
     return crud.createRefinedKrystaliumFromSamples(db, negative_sample=db_negative_sample, positive_sample=db_positive_sample, refined_rfid_id=creation_request.refined_krystalium_rfid_id)
 
 
+@app.get("/blood", response_model = list[schemas.BloodSample], responses = {400: {"model": BadRequestError}})
+def get_all_blood_samples(db: Session = Depends(get_db)):
+    """
+    Get a list of all blood samples.
+    """
+    return crud.getAllBloodSamples(db)
+
+
+@app.post("/blood", response_model = schemas.BloodSample, responses = {400: {"model": BadRequestError}})
+def create_blood_sample(sample: schemas.BloodSampleCreate, db: Session = Depends(get_db)):
+    """
+    Create a new blood sample.
+    """
+    checkUniqueRFID(db, sample.rfid_id)
+    return crud.createBloodSample(db = db, blood_sample = sample)
+
+
+@app.get("/blood/{rfid_id}", response_model = schemas.BloodSample, responses = {400: {"model": BadRequestError}})
+def get_blood_sample_by_rfid(rfid_id: str, db: Session = Depends(get_db)):
+    """
+    Get a single blood sample by RFID ID.
+    """
+    return crud.getBloodSampleByRFID(db, rfid_id)
+
+
+# @app.post("/blood/random", response_model = schemas.BloodSample, responses = {400: {"model": BadRequestError}})
+# def create_random_blood_sample(blood_create: schemas.RandomBloodSampleCreate, db: Session = Depends(get_db)):
+#     """
+#     Create one or more random blood samples.
+#     """

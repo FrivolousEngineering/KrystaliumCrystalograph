@@ -145,24 +145,18 @@ class RefinedKrystaliumBase(BaseModel):
     purity: Purity = Field(description="How pure / strong is the sample")
 
 
-class RefinedKrystalium(RefinedKrystaliumBase):
-    id: int
-
-    @computed_field(description="The numerical representation of the purity. Two indicates polluted, 12 indicates perfect")
-    @property
-    def purity_score(self) -> int:
-        return Purity.getScore(self.purity)
-
-    class Config:
-        orm_mode = True
+class BloodSampleBase(BaseModel):
+    """
+    Represents a sample of a person's blood. Different places in the world can have different sorts
+    of "ambient" krystallium. People living in those areas will be exposed to that krystallium.
 
 
-class RefinedKrystaliumCreate(RefinedKrystaliumBase):
-    pass
-
-
-class KrystaliumSampleCreate(KrystaliumSampleBase):
-    pass
+    """
+    rfid_id: str = Field(description = "The ID of the physical RFID in the sample")
+    origin: str = Field(description = "The origin (town/country) of the sample")
+    strength: int = Field(description = "The strength of the effect")
+    action: Action = Field(description = "The action of the exposure")
+    target: Target = Field(description = "The target of the exposure")
 
 
 class KrystaliumSample(KrystaliumSampleBase):
@@ -177,6 +171,37 @@ class KrystaliumSample(KrystaliumSampleBase):
 
     class Config:
         orm_mode = True
+
+
+class RefinedKrystalium(RefinedKrystaliumBase):
+    id: int
+
+    @computed_field(description="The numerical representation of the purity. Two indicates polluted, 12 indicates perfect")
+    @property
+    def purity_score(self) -> int:
+        return Purity.getScore(self.purity)
+
+    class Config:
+        orm_mode = True
+
+
+class BloodSample(BloodSampleBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+class RefinedKrystaliumCreate(RefinedKrystaliumBase):
+    pass
+
+
+class KrystaliumSampleCreate(KrystaliumSampleBase):
+    pass
+
+
+class BloodSampleCreate(BloodSampleBase):
+    pass
 
 
 class RefinedKrystaliumFromSample(BaseModel):
@@ -198,6 +223,13 @@ class RandomRefinedKrystaliumCreate(BaseModel):
                                            description="The purity of the sample. If not set it will set it randomly")
     num_samples: int = Field(1,
                              description="How many samples must be created. When this is set, rfid_id must be empty. This should only be used for debug purposes")
+
+
+class RandomBloodSampleCreate(BaseModel):
+    rfid_id: Optional[str] = Field(None, description="The ID of the physical RFID in the sample. This can not be set when creating multiple samples")
+    origin: Optional[str] = Field(None, description = "The origin of the blood sample. If not set it will be set randomly")
+    strength: Optional[int] = Field(None, description = "The strength of the effect. If not set a random strength will be used.")
+    num_samples: int = Field(1, description = "The number of samples to create")
 
 
 class BadRequestError(BaseModel):
