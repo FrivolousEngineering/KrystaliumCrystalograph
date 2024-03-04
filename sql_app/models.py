@@ -38,3 +38,15 @@ class RefinedKrystalium(Base):
 
     purity = Column(String, nullable=False)
 
+
+class BloodSample(Base):
+    __tablename__ = "blood_sample"
+
+    id = Column(Integer, primary_key = True, index = True)
+    rfid_id = Column(String, unique = True)
+
+    origin = Column(String, nullable = False)
+    strength = Column(Integer, nullable = False)
+
+    action = Column(String, nullable = False)
+    target = Column(String, nullable = False)

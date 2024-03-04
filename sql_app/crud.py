@@ -41,6 +41,10 @@ def getAllRefinedKrystalium(db: Session):
     return db.query(models.RefinedKrystalium).all()
 
 
+def getAllBloodSamples(db: Session):
+    return db.query(models.BloodSample).all()
+
+
 def findVulgarityFromProperties(positive_action, negative_action, positive_target, negative_target, *args, **kwargs) -> Vulgarity:
     target_invariant = positive_target == negative_target
     action_invariant = positive_action == negative_action
@@ -87,6 +91,14 @@ def createRefinedKrystalium(db: Session, refined_krystalium: schemas.RefinedKrys
     db.commit()
     db.refresh(db_refined_krystalium)
     return db_refined_krystalium
+
+
+def createBloodSample(db: Session, blood_sample: schemas.BloodSampleCreate):
+    db_blood_sample = models.BloodSample(**blood_sample.__dict__)
+    db.add(db_blood_sample)
+    db.commit()
+    db.refresh(db_blood_sample)
+    return db_blood_sample
 
 
 def createRefinedKrystaliumFromSamples(db: Session, positive_sample: models.KrystaliumSample, negative_sample: models.KrystaliumSample, refined_rfid_id: str):
@@ -288,3 +300,7 @@ def deleteRefinedKrystaliumByRFID(db: Session, rfid_id: str) -> bool:
 
 def getRefineKrystaliumByRFID(db: Session, rfid_id: str) -> Optional[models.KrystaliumSample]:
     return db.query(models.RefinedKrystalium).filter(models.RefinedKrystalium.rfid_id == rfid_id).first()
+
+
+def getBloodSampleByRFID(db: Session, rfid_id: str) -> Optional[models.BloodSample]:
+    return db.query(models.BloodSample).filter(models.BloodSample.rfid_id == rfid_id).first()
