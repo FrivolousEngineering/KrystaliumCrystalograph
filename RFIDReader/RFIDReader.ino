@@ -17,6 +17,7 @@ String data_to_write = "";
 byte blockData [16] = {};
 byte buffer[18]; // To hold the read data
 int block_to_read = -1;
+bool ignore_card_remove_event = false;
 
 
 void setup() { 
@@ -73,8 +74,7 @@ void readCardMemory() {
       Serial.println(block);
     }
   }
-  mfrc522.PICC_HaltA();
-  mfrc522.PCD_StopCrypto1();
+  ignore_card_remove_event = true; 
 }
 
 void processCommand(String command) {
@@ -104,8 +104,10 @@ void processCommand(String command) {
     }
   } else if (keyword == "WRITE") {
     data_to_write = argument;  // Store data for writing
+    ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
   }else if (keyword == "READ") {
     block_to_read = 4; // Prepare for reading.
+    ignore_card_remove_event = true; 
   } else {
     Serial.println("Unknown command");
   }
@@ -185,16 +187,22 @@ void loop() {
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
     if (detected_tag == "") {
       detected_tag = toHexString(mfrc522.uid.uidByte, mfrc522.uid.size);
-      Serial.print("Tag found: ");
-      Serial.println(detected_tag);
-      if(printCardType) {
-        Serial.print(F("PICC type: "));
-        MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-        Serial.println(mfrc522.PICC_GetTypeName(piccType));
+      if(!ignore_card_remove_event){
+        Serial.print("Tag found: ");
+        Serial.println(detected_tag);
+        if(printCardType) {
+          Serial.print(F("PICC type: "));
+          MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+          Serial.println(mfrc522.PICC_GetTypeName(piccType));
+        }
+        if (printMemory) {
+          readCardMemory();
+        }
+      } else {
+        // If we are ignoring an event, we should start listening after ignoring it once.
+        ignore_card_remove_event = false;
       }
-      if (printMemory) {
-        readCardMemory();
-      }
+      
     } else {
       // So, we do this indirectly, as the card reader seems to flip between being able to do something and not being able to do something.
       // Since we *know* that we are in a situation where it can do something, it's also the moment to write it. If we don't, we get random timeout issues
@@ -218,8 +226,10 @@ void loop() {
     if (detected_tag != "") {
       errorCount++;
       if (errorCount > errorThreshold) {
-        Serial.print("Tag lost: ");
-        Serial.println(detected_tag);
+        if(!ignore_card_remove_event) {
+          Serial.print("Tag lost: ");
+          Serial.println(detected_tag);
+        }
         detected_tag = "";
         errorCount = 0;
         mfrc522.PICC_HaltA();
