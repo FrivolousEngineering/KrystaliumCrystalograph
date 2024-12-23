@@ -12,6 +12,8 @@ const int errorThreshold = 3;
 String detected_tag = "";
 bool printMemory = false;
 bool printCardType = true;
+String data_to_write = "";
+byte blockData [16] = {};
 
 void setup() { 
   Serial.begin(9600);
@@ -80,18 +82,49 @@ void processCommand(String command) {
     printMemory = false;
     Serial.println("Memory print disabled");
   } else if (command.startsWith("WRITE ")) {
-    String data = command.substring(6);
-    writeCardMemory(data);
+    data_to_write = command.substring(6); // Store the data to be written, main loop will handle it
   } else {
     Serial.println("Unknown command");
   }
 }
 
+bool writeDataToBlock(int blockNum, byte blockData[]) 
+{
+  /* Authenticating the desired data block for write access using Key A */
+  
+  MFRC522::StatusCode status;
+  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockNum, &key, &(mfrc522.uid));
+  if (status != MFRC522::STATUS_OK) {
+    Serial.print("Authentication failed for Write: ");
+    Serial.println(mfrc522.GetStatusCodeName(status));
+    return false;
+  }
+
+  
+  /* Write data to the block */
+  status = mfrc522.MIFARE_Write(blockNum, blockData, 16);
+  if (status != MFRC522::STATUS_OK) {
+    Serial.print("Writing to Block failed: ");
+    Serial.println(mfrc522.GetStatusCodeName(status));
+    return false;
+  } 
+   Serial.println("WRiting complete! ");
+  return true;
+}
+
 
 void writeCardMemory(String data) {
+  byte blockData[16]; // 16 bytes for the block
+  data.getBytes(blockData, 16); // Copy the string to the byte array
+  for (int i = data.length(); i < 16; i++) {
+    blockData[i] = '\0';
+  }
+
   Serial.print("Attempting to write: ");
   Serial.println(data);
-
+  if(writeDataToBlock(4, blockData)){
+    data_to_write = "";
+  }
 }
 
 void loop() {
@@ -112,6 +145,10 @@ void loop() {
       }
       if (printMemory) {
         readCardMemory();
+      }
+    } else {
+      if(data_to_write != "") {
+        writeCardMemory(data_to_write);
       }
     }
     errorCount = 0;
