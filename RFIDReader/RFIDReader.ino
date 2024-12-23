@@ -75,14 +75,31 @@ void readCardMemory() {
 
 void processCommand(String command) {
   command.trim();
-  if (command == "MREAD ON") {
-    printMemory = true;
-    Serial.println("Memory print enabled");
-  } else if (command == "MREAD OFF") {
-    printMemory = false;
-    Serial.println("Memory print disabled");
-  } else if (command.startsWith("WRITE ")) {
-    data_to_write = command.substring(6); // Store the data to be written, main loop will handle it
+  
+  int spaceIndex = command.indexOf(' ');  
+  String keyword = (spaceIndex != -1) ? command.substring(0, spaceIndex) : command;
+  String argument = (spaceIndex != -1) ? command.substring(spaceIndex + 1) : "";
+
+  // Convert keyword to uppercase
+  keyword.toUpperCase();
+
+  // Convert argument to uppercase unless it's for WRITE
+  if(keyword != "WRITE"){
+    argument.toUpperCase();
+  }
+  
+  if (keyword == "MREAD") {
+    if (argument == "ON") {
+      printMemory = true;
+      Serial.println("Memory print enabled");
+    } else if (argument == "OFF") {
+      printMemory = false;
+      Serial.println("Memory print disabled");
+    } else {
+      Serial.println("Unknown MREAD argument");
+    }
+  } else if (keyword == "WRITE") {
+    data_to_write = argument;  // Store data for writing
   } else {
     Serial.println("Unknown command");
   }
@@ -109,7 +126,6 @@ bool writeDataToBlock(int blockNum, byte blockData[])
    Serial.println("WRiting complete! ");
   return true;
 }
-
 
 void writeCardMemory(String data) {
   byte blockData[16]; // 16 bytes for the block
