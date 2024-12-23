@@ -79,9 +79,19 @@ void processCommand(String command) {
   } else if (command == "MREAD OFF") {
     printMemory = false;
     Serial.println("Memory print disabled");
+  } else if (command.startsWith("WRITE ")) {
+    String data = command.substring(6);
+    writeCardMemory(data);
   } else {
     Serial.println("Unknown command");
   }
+}
+
+
+void writeCardMemory(String data) {
+  Serial.print("Attempting to write: ");
+  Serial.println(data);
+
 }
 
 void loop() {
