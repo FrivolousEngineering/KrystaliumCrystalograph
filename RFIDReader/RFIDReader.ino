@@ -6,6 +6,7 @@
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Instance of the class
 MFRC522::MIFARE_Key key;
+MFRC522::StatusCode status;
 
 int errorCount = 0;
 const int errorThreshold = 3;
@@ -14,6 +15,9 @@ bool printMemory = false;
 bool printCardType = true;
 String data_to_write = "";
 byte blockData [16] = {};
+byte buffer[18]; // To hold the read data
+int block_to_read = -1;
+
 
 void setup() { 
   Serial.begin(9600);
@@ -100,15 +104,45 @@ void processCommand(String command) {
     }
   } else if (keyword == "WRITE") {
     data_to_write = argument;  // Store data for writing
+  }else if (keyword == "READ") {
+    block_to_read = 4; // Prepare for reading.
   } else {
     Serial.println("Unknown command");
   }
 }
 
+// Function to read a block and return the data as a string
+String readBlock(byte block) {
+  // Authenticate the block (use key A)
+  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
+  if (status != MFRC522::STATUS_OK) {
+    Serial.print("Authentication failed: ");
+    Serial.println(mfrc522.GetStatusCodeName(status));
+    return "";
+  }
+
+  // Read the block
+  byte size = sizeof(buffer);
+  status = mfrc522.MIFARE_Read(block, buffer, &size);
+  if (status != MFRC522::STATUS_OK) {
+    Serial.print("Read failed: ");
+    Serial.println(mfrc522.GetStatusCodeName(status));
+    return "";
+  }
+
+  // Convert the buffer to a string
+  String data = "";
+  for (byte i = 0; i < 16; i++) {
+    if (buffer[i] != 0) {
+      data += (char)buffer[i];
+    }
+  }
+  return data;
+}
+
 bool writeDataToBlock(int blockNum, byte blockData[]) 
 {
   // Authenticating the desired data block for write access using Key A
-  MFRC522::StatusCode status;
   status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockNum, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
     Serial.print("Authentication failed for Write: ");
@@ -168,6 +202,15 @@ void loop() {
       // to change. So future me (or idk, whoever reads this), learn from my folley. That retry stuff for the newCard present is there for a reason and it also affects the writing stuff. 
       if(data_to_write != "") {
         writeCardMemory(data_to_write);
+      } 
+      if(block_to_read != -1)
+      {
+        String blockData = readBlock(block_to_read);
+        Serial.print("Data in Block ");
+        Serial.print(4);
+        Serial.print(": ");
+        Serial.println(blockData);
+        block_to_read = -1; // reset it again
       }
     }
     errorCount = 0;
