@@ -90,8 +90,7 @@ void processCommand(String command) {
 
 bool writeDataToBlock(int blockNum, byte blockData[]) 
 {
-  /* Authenticating the desired data block for write access using Key A */
-  
+  // Authenticating the desired data block for write access using Key A
   MFRC522::StatusCode status;
   status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockNum, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
@@ -99,9 +98,8 @@ bool writeDataToBlock(int blockNum, byte blockData[])
     Serial.println(mfrc522.GetStatusCodeName(status));
     return false;
   }
-
   
-  /* Write data to the block */
+  // Write data to the block
   status = mfrc522.MIFARE_Write(blockNum, blockData, 16);
   if (status != MFRC522::STATUS_OK) {
     Serial.print("Writing to Block failed: ");
@@ -116,6 +114,7 @@ bool writeDataToBlock(int blockNum, byte blockData[])
 void writeCardMemory(String data) {
   byte blockData[16]; // 16 bytes for the block
   data.getBytes(blockData, 16); // Copy the string to the byte array
+  // Fill the rest of the block with empty data
   for (int i = data.length(); i < 16; i++) {
     blockData[i] = '\0';
   }
