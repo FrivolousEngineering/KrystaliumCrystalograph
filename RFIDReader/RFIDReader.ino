@@ -147,6 +147,10 @@ void loop() {
         readCardMemory();
       }
     } else {
+      // So, we do this indirectly, as the card reader seems to flip between being able to do something and not being able to do something.
+      // Since we *know* that we are in a situation where it can do something, it's also the moment to write it. If we don't, we get random timeout issues
+      // on the writing. We couldn't just use a normal retry, as it would try the same thing without allowing the states (or whatever the fuck is causing this)
+      // to change. So future me (or idk, whoever reads this), learn from my folley. That retry stuff for the newCard present is there for a reason and it also affects the writing stuff. 
       if(data_to_write != "") {
         writeCardMemory(data_to_write);
       }
