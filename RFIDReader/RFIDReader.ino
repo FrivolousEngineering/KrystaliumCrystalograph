@@ -185,24 +185,26 @@ void loop() {
   }
 
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
-    if (detected_tag == "") {
+    if (detected_tag == "") { 
+      // A card was detected and we didn't have one already.
       detected_tag = toHexString(mfrc522.uid.uidByte, mfrc522.uid.size);
-      if(!ignore_card_remove_event){
+      if(!ignore_card_remove_event) {
+        // We're not ignoring the "new card" event.
         Serial.print("Tag found: ");
         Serial.println(detected_tag);
-        if(printCardType) {
+        // Some debug prints
+        if(printCardType) { 
           Serial.print(F("PICC type: "));
           MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
           Serial.println(mfrc522.PICC_GetTypeName(piccType));
         }
         if (printMemory) {
-          readCardMemory();
+          mreareadCardMemory();
         }
       } else {
         // If we are ignoring an event, we should start listening after ignoring it once.
         ignore_card_remove_event = false;
       }
-      
     } else {
       // So, we do this indirectly, as the card reader seems to flip between being able to do something and not being able to do something.
       // Since we *know* that we are in a situation where it can do something, it's also the moment to write it. If we don't, we get random timeout issues
@@ -211,6 +213,7 @@ void loop() {
       if(data_to_write != "") {
         writeCardMemory(data_to_write);
       } 
+      // TODO: Expand to include multiple blocks
       if(block_to_read != -1)
       {
         String blockData = readBlock(block_to_read);
