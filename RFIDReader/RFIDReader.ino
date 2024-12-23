@@ -11,6 +11,7 @@ int errorCount = 0;
 const int errorThreshold = 3;
 String detected_tag = "";
 bool printMemory = false;
+bool printCardType = true;
 
 void setup() { 
   Serial.begin(9600);
@@ -94,6 +95,11 @@ void loop() {
       detected_tag = toHexString(mfrc522.uid.uidByte, mfrc522.uid.size);
       Serial.print("Tag found: ");
       Serial.println(detected_tag);
+      if(printCardType) {
+        Serial.print(F("PICC type: "));
+        MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+        Serial.println(mfrc522.PICC_GetTypeName(piccType));
+      }
       if (printMemory) {
         readCardMemory();
       }
