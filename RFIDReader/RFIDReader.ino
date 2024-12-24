@@ -21,6 +21,25 @@ int block_to_read = -1;
 bool ignore_card_remove_event = false;
 
 
+const char* validActions[] = {
+  "EXPANDING", "CONTRACTING", "CONDUCTING", "INSULATING",
+  "DETERIORATING", "CREATING", "DESTROYING", "INCREASING",
+  "DECREASING", "ABSORBING", "RELEASING", "SOLIDIFYING",
+  "LIGHTENING", "ENCUMBERING", "FORTIFYING", "HEATING", "COOLING"
+};
+
+const char* validTargets[] = {
+    "FLESH", "MIND", "GAS", "SOLID", "LIQUID",
+    "ENERGY", "LIGHT", "SOUND", "KRYSTAL", "PLANT"
+};
+
+// Block 4 stores the Type of the sample ("RAW" or "REFINED")
+// Block 5 stores the first action (primary for refined, positive for RAW)
+// Block 6 stores the first target (primary for refined, positive for RAW)
+// Block 7 stores the second action (secondary for refined, negative for RAW)
+// Block 8 stores the second target (secondary for refined, negative for RAW)
+
+
 void setup() { 
   Serial.begin(9600);
   SPI.begin(); // Init SPI bus
@@ -127,8 +146,19 @@ void processCommand(String command) {
       Serial.print("Name: ");
       Serial.println(retrievedString);
     }
-  } else {
-    Serial.println("Unknown command");
+  } else if (keyword == "WRITETYPE") {
+    if(argument != "REFINED" && argument != "RAW"){
+      Serial.println("Unknown krystalium type. Only RAW and REFINED are supported");
+      return;
+    }
+    data_to_write = argument;  // Store data for writing
+    ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
+  } else if (keyword == "WRITEACTION1") {
+    if(!isValidAction(argument)){
+      Serial.println("Unknown action :(");
+      return;
+    }
+    Serial.println("BJOOP");
   }
 }
 
@@ -261,6 +291,23 @@ void loop() {
   }
 }
 
+bool isValidAction(const String& action) {
+  for (const char* validAction : validActions) {
+    if (action.equals(validAction)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isValidTarget(const String& target) {
+  for (const char* validTarget : validTargets) {
+    if (target.equals(validTarget)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 void writeStringToEEPROM(int addrOffset, const String &strToWrite) {
   byte len = strToWrite.length();
@@ -274,8 +321,7 @@ void writeStringToEEPROM(int addrOffset, const String &strToWrite) {
 #endif
 }
 
-String readStringFromEEPROM(int addrOffset)
-{
+String readStringFromEEPROM(int addrOffset) {
   int newStrLen = EEPROM.read(addrOffset);
   char data[newStrLen + 1];
   for (int i = 0; i < newStrLen; i++)
