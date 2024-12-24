@@ -17,7 +17,7 @@ bool printCardType = true;
 String data_to_write = "";
 byte blockData [16] = {};
 byte buffer[18]; // To hold the read data
-int block_to_read = -1;
+int blocks_to_read[10] = {0};
 bool ignore_card_remove_event = false;
 
 
@@ -143,8 +143,13 @@ void processCommand(String command) {
     data_to_write = argument;  // Store data for writing
     ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
   } else if (keyword == "READ") {
-    block_to_read = argument.toInt(); // Prepare for reading.
-    ignore_card_remove_event = true; 
+    if(argument == "ALL"){
+      int all_blocks[] = {4, 5, 6, 8, 9, 10, 12};
+      memcpy(blocks_to_read, all_blocks, sizeof(all_blocks));
+    } else {
+      int single_block[] = {argument.toInt()};
+      memcpy(blocks_to_read, single_block, sizeof(single_block));
+    }
   } else if (keyword == "NAME") {
     // Setting the name commands (used to control the name of the device). If we run this on a ESP, we have much better way of doing this.
     // On a duino nano there isn't a simple way to get a unique identifier, so we just have to store it to eeprom.
@@ -392,15 +397,17 @@ void loop() {
       }
 
       // TODO: Expand to include multiple blocks
-      if(block_to_read != -1)
-      {
-        String blockData = readBlock(block_to_read);
+      for (int i = 0; i < sizeof(blocks_to_read) / sizeof(blocks_to_read[0]); i++) {
+        if (blocks_to_read[i] == 0) break;
+        int current_block = blocks_to_read[i];
+        String blockData = readBlock(current_block);
         Serial.print("Data in Block ");
-        Serial.print(4);
+        Serial.print(current_block);
         Serial.print(": ");
         Serial.println(blockData);
-        block_to_read = -1; // reset it again
+        ignore_card_remove_event = true;
       }
+      memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
     }
     errorCount = 0;
   } else {
