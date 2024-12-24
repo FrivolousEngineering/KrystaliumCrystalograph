@@ -21,6 +21,15 @@ int block_to_read = -1;
 bool ignore_card_remove_event = false;
 
 
+String sample_type_to_write = "";  // Stored in block 4
+String primary_action_to_write = ""; // stored in block 5
+String primary_target_to_write = "";  // stored in block 6
+String secondary_action_to_write = ""; // stored in block 8 (We skip block 7 as writing there would break the card
+String secondary_target_to_write = ""; // stored in block 9
+String depleted_to_write = ""; // stored in block 10
+String vulgarity_to_write = ""; // stsored in block 12
+
+
 const char* validActions[] = {
   "EXPANDING", "CONTRACTING", "CONDUCTING", "INSULATING",
   "DETERIORATING", "CREATING", "DESTROYING", "INCREASING",
@@ -29,16 +38,15 @@ const char* validActions[] = {
 };
 
 const char* validTargets[] = {
-    "FLESH", "MIND", "GAS", "SOLID", "LIQUID",
-    "ENERGY", "LIGHT", "SOUND", "KRYSTAL", "PLANT"
+  "FLESH", "MIND", "GAS", "SOLID", "LIQUID",
+  "ENERGY", "LIGHT", "SOUND", "KRYSTAL", "PLANT"
 };
 
-// Block 4 stores the Type of the sample ("RAW" or "REFINED")
-// Block 5 stores the first action (primary for refined, positive for RAW)
-// Block 6 stores the first target (primary for refined, positive for RAW)
-// Block 7 stores the second action (secondary for refined, negative for RAW)
-// Block 8 stores the second target (secondary for refined, negative for RAW)
-
+const char* validVulgarities[] = {
+  "VULGAR", "LOW_MUNDANE", "HIGH_MUNDANE",
+  "LOW_SEMI_PRECIOUS", "HIGH_SEMI_PRECIOUS",
+  "PRECIOUS"
+};
 
 void setup() { 
   Serial.begin(9600);
@@ -101,6 +109,11 @@ void readCardMemory() {
   ignore_card_remove_event = true; 
 }
 
+bool isValidDepleted(const String& depleted) {
+  return depleted == "DEPLETED" || depleted == "ACTIVE";
+}
+
+
 void processCommand(String command) {
   command.trim();
   
@@ -130,7 +143,7 @@ void processCommand(String command) {
     data_to_write = argument;  // Store data for writing
     ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
   } else if (keyword == "READ") {
-    block_to_read = 4; // Prepare for reading.
+    block_to_read = argument.toInt(); // Prepare for reading.
     ignore_card_remove_event = true; 
   } else if (keyword == "NAME") {
     // Setting the name commands (used to control the name of the device). If we run this on a ESP, we have much better way of doing this.
@@ -152,15 +165,97 @@ void processCommand(String command) {
       return;
     }
     data_to_write = argument;  // Store data for writing
-    ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
   } else if (keyword == "WRITEACTION1") {
     if(!isValidAction(argument)){
       Serial.println("Unknown action :(");
       return;
     }
     Serial.println("BJOOP");
+  } else if (keyword == "WRITESAMPLE") {
+    handleWriteSample(argument);
+  } else {
+    Serial.println("Unknown command");
   }
 }
+
+void handleWriteSample(String args) {
+  int index1 = args.indexOf(' ');
+  int index2 = args.indexOf(' ', index1 + 1);
+  int index3 = args.indexOf(' ', index2 + 1);
+  int index4 = args.indexOf(' ', index3 + 1);
+  int index5 = args.indexOf(' ', index4 + 1);
+  int index6 = args.indexOf(' ', index5 + 1);
+
+  // Validate minimum required parameters
+  if (index1 == -1 || index2 == -1 || index3 == -1 || index4 == -1) {
+    Serial.println("Invalid WRITESAMPLE format. Usage: WRITESAMPLE {sample_type} {primary_action} {primary_target} {secondary_action} {secondary_target} [depleted] [vulgarity]");
+    return;
+  }
+
+  // Extract required parameters
+  String sample_type = args.substring(0, index1);
+  String primary_action = args.substring(index1 + 1, index2);
+  String primary_target = args.substring(index2 + 1, index3);
+  String secondary_action = args.substring(index3 + 1, index4);
+  String secondary_target = (index5 != -1) ? args.substring(index4 + 1, index5) : args.substring(index4 + 1);
+
+  // Extract optional parameters
+  String depleted = "";
+  String vulgarity = "";
+
+  if (index5 != -1) {
+    String remaining = args.substring(index5 + 1);
+    int space_check = remaining.indexOf(' ');
+
+    if (space_check == -1) {
+      depleted = remaining;  // Only one word left, treat as depleted
+    } else {
+      depleted = remaining.substring(0, space_check);
+      vulgarity = remaining.substring(space_check + 1);  // Remaining part is vulgarity
+    }
+  }
+
+  // Validate core parameters
+  if (sample_type != "RAW" && sample_type != "REFINED") {
+    Serial.println("Invalid sample type. Use RAW or REFINED.");
+    return;
+  }
+  if (!isValidAction(primary_action) || !isValidAction(secondary_action)) {
+    Serial.println("Invalid action detected.");
+    return;
+  }
+  if (!isValidTarget(primary_target) || !isValidTarget(secondary_target)) {
+    Serial.println("Invalid target detected.");
+    return;
+  }
+
+  // Optional parameter validation
+  if (depleted != "" && !isValidDepleted(depleted)) {
+    Serial.println("Invalid depleted value.");
+    return;
+  }
+  if (vulgarity != "") {
+    if (!isValidVulgarity(vulgarity)) {
+      Serial.print("Invalid vulgarity value: ");
+      Serial.println(vulgarity);
+      return;
+    }
+    if (sample_type == "RAW") {
+      Serial.println("Can't set vulgarity on raw samples.");
+      return;
+    }
+  }
+
+  // Assign values to global variables
+  sample_type_to_write = sample_type;
+  primary_action_to_write = primary_action;
+  primary_target_to_write = primary_target;
+  secondary_action_to_write = secondary_action;
+  secondary_target_to_write = secondary_target;
+  depleted_to_write = depleted;
+  vulgarity_to_write = vulgarity;
+}
+
 
 // Function to read a block and return the data as a string
 String readBlock(byte block) {
@@ -208,11 +303,11 @@ bool writeDataToBlock(int blockNum, byte blockData[])
     Serial.println(mfrc522.GetStatusCodeName(status));
     return false;
   } 
-   Serial.println("WRiting complete! ");
+  Serial.println("Writing complete! ");
   return true;
 }
 
-void writeCardMemory(String data) {
+bool writeCardMemory(int blockNum, String data) {
   byte blockData[16]; // 16 bytes for the block
   data.getBytes(blockData, 16); // Copy the string to the byte array
   // Fill the rest of the block with empty data
@@ -220,11 +315,12 @@ void writeCardMemory(String data) {
     blockData[i] = '\0';
   }
 
-  Serial.print("Attempting to write: ");
+  Serial.print("WRiting to block ");
+  Serial.print(blockNum);
+  Serial.print(" data: ");
   Serial.println(data);
-  if(writeDataToBlock(4, blockData)){
-    data_to_write = "";
-  }
+  ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
+  return writeDataToBlock(blockNum, blockData);
 }
 
 void loop() {
@@ -260,8 +356,41 @@ void loop() {
       // on the writing. We couldn't just use a normal retry, as it would try the same thing without allowing the states (or whatever the fuck is causing this)
       // to change. So future me (or idk, whoever reads this), learn from my folley. That retry stuff for the newCard present is there for a reason and it also affects the writing stuff. 
       if(data_to_write != "") {
-        writeCardMemory(data_to_write);
+        writeCardMemory(4, data_to_write);
       } 
+
+      if(sample_type_to_write != "") {
+        writeCardMemory(4, sample_type_to_write);
+        sample_type_to_write = "";
+      } 
+      if(primary_action_to_write != "") {
+        writeCardMemory(5, primary_action_to_write);
+        primary_action_to_write = "";
+      }
+      if(primary_target_to_write != "") {
+        writeCardMemory(6, primary_target_to_write);
+        primary_target_to_write = "";
+      }
+
+      if(secondary_action_to_write != "") {
+        writeCardMemory(8, secondary_action_to_write);
+        secondary_action_to_write = "";
+      }
+      if(secondary_target_to_write != "") {
+        writeCardMemory(9, secondary_target_to_write);
+        secondary_target_to_write = "";
+      }
+
+      if(depleted_to_write != "") {
+        writeCardMemory(10, depleted_to_write);
+        depleted_to_write = "";
+      }
+
+      if(vulgarity_to_write != "") {
+        writeCardMemory(10, vulgarity_to_write);
+        vulgarity_to_write = "";
+      }
+
       // TODO: Expand to include multiple blocks
       if(block_to_read != -1)
       {
@@ -308,6 +437,16 @@ bool isValidTarget(const String& target) {
   }
   return false;
 }
+
+bool isValidVulgarity(const String& vulgarity) {
+  for (const char* validVulgarity : validVulgarities) {
+    if (vulgarity.equals(validVulgarity)) {
+        return true;
+    }
+  }
+  return false;
+}
+
 
 void writeStringToEEPROM(int addrOffset, const String &strToWrite) {
   byte len = strToWrite.length();
