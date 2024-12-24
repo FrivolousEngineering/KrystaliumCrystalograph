@@ -423,12 +423,11 @@ void loop() {
     
         ignore_card_remove_event = true;
       }
-
-if (dataRead) {
-    memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
-    Serial.println();
-}
       
+      if (dataRead) {
+        memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
+        Serial.println();
+      }
     }
     errorCount = 0;
   } else {
