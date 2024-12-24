@@ -251,7 +251,7 @@ void handleWriteSample(String args) {
 
   if (sample_type == "RAW" && purity != "") {
     depleted = purity;  // In RAW, treat purity field as depleted
-    purity = "";
+    purity = "\0"; // This will actually set it to be empty while writing
   }
   if (depleted == ""){
     depleted == "ACTIVE"; // Set the default value
@@ -401,7 +401,11 @@ void loop() {
       }
 
       if(purity_to_write != "") {
-        writeCardMemory(12, purity_to_write);
+        if(purity_to_write = "\0") {
+          writeCardMemory(12, "");
+        } else {
+          writeCardMemory(12, purity_to_write);
+        }
         purity_to_write = "";
       }
 
