@@ -1,5 +1,6 @@
 #include <SPI.h>
 #include <MFRC522.h>
+#include <EEPROM.h>
 
 #define SS_PIN 5
 #define RST_PIN 0
@@ -30,6 +31,10 @@ void setup() {
   for (byte i = 0; i < 6; i++) {
     key.keyByte[i] = 0xFF;
   }
+  
+#if defined(ESP32) || defined(ESP8266)
+  EEPROM.begin(512);  // ESPS need to initialize EEPROM size. The Nano doesn't need to.
+#endif
 }
 
 String toHexString(byte *buffer, byte bufferSize) {
@@ -83,12 +88,12 @@ void processCommand(String command) {
   int spaceIndex = command.indexOf(' ');  
   String keyword = (spaceIndex != -1) ? command.substring(0, spaceIndex) : command;
   String argument = (spaceIndex != -1) ? command.substring(spaceIndex + 1) : "";
-
+  
   // Convert keyword to uppercase
   keyword.toUpperCase();
 
   // Convert argument to uppercase unless it's for WRITE
-  if(keyword != "WRITE"){
+  if(keyword != "WRITE" && keyword != "NAME"){
     argument.toUpperCase();
   }
   
@@ -105,9 +110,23 @@ void processCommand(String command) {
   } else if (keyword == "WRITE") {
     data_to_write = argument;  // Store data for writing
     ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
-  }else if (keyword == "READ") {
+  } else if (keyword == "READ") {
     block_to_read = 4; // Prepare for reading.
     ignore_card_remove_event = true; 
+  } else if (keyword == "NAME") {
+    // Setting the name commands (used to control the name of the device). If we run this on a ESP, we have much better way of doing this.
+    // On a duino nano there isn't a simple way to get a unique identifier, so we just have to store it to eeprom.
+    if(argument != ""){
+      // Keyword was provided, print it
+      writeStringToEEPROM(0, argument);
+      Serial.print("Setting name: ");
+      Serial.println(argument);
+    } else {
+      // Print the keyword out
+      String retrievedString = readStringFromEEPROM(0);
+      Serial.print("Name: ");
+      Serial.println(retrievedString);
+    }
   } else {
     Serial.println("Unknown command");
   }
@@ -199,7 +218,7 @@ void loop() {
           Serial.println(mfrc522.PICC_GetTypeName(piccType));
         }
         if (printMemory) {
-          mreareadCardMemory();
+          readCardMemory();
         }
       } else {
         // If we are ignoring an event, we should start listening after ignoring it once.
@@ -240,4 +259,29 @@ void loop() {
       }
     }
   }
+}
+
+
+void writeStringToEEPROM(int addrOffset, const String &strToWrite) {
+  byte len = strToWrite.length();
+  EEPROM.write(addrOffset, len);
+  for (int i = 0; i < len; i++)
+  {
+    EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
+  }
+#if defined(ESP32) || defined(ESP8266)
+  EEPROM.commit();  // ESPs requires a commit, the nano does not.
+#endif
+}
+
+String readStringFromEEPROM(int addrOffset)
+{
+  int newStrLen = EEPROM.read(addrOffset);
+  char data[newStrLen + 1];
+  for (int i = 0; i < newStrLen; i++)
+  {
+    data[i] = EEPROM.read(addrOffset + 1 + i);
+  }
+  data[newStrLen] = '\0';
+  return String(data);
 }
