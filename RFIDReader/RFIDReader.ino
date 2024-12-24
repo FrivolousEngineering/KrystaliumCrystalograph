@@ -197,7 +197,7 @@ void handleWriteSample(String args) {
   int index6 = args.indexOf(' ', index5 + 1);
   
   // Validate minimum required parameters
-  if (index1 == -1 || index2 == -1 || index3 == -1 || index4 == -1 || index5 == -1) {
+  if (index1 == -1 || index2 == -1 || index3 == -1 || index4 == -1) {
     Serial.println("Invalid WRITESAMPLE format. Usage: WRITESAMPLE {sample_type} {primary_action} {primary_target} {secondary_action} {secondary_target} [purity] [depleted]");
     return;
   }
@@ -213,20 +213,23 @@ void handleWriteSample(String args) {
   String purity = "";
   String depleted = "";
 
-  // Handle optional parameters for REFINED samples
-  if (index6 != -1) {
-    purity = args.substring(index5 + 1, index6);
-    depleted = args.substring(index6 + 1);
-  } else {
-    purity = args.substring(index5 + 1);
-  }
-
   // Validation
   if (sample_type != "RAW" && sample_type != "REFINED") {
     Serial.println("Invalid sample type. Use RAW or REFINED.");
     return;
   }
-
+  if (sample_type == "RAW") {
+    if(index5 != -1) {
+      depleted = args.substring(index5 + 1);
+    }
+    purity = "!"; // This will actually set it to be empty while writing 
+  } else {
+    purity = args.substring(index5 + 1, index6);
+    if(index6 != -1) {
+      depleted = args.substring(index6 + 1);
+    }
+  }
+  
   if (!isValidAction(primary_action) || !isValidAction(secondary_action)) {
     Serial.println("Invalid action detected.");
     return;
@@ -249,15 +252,12 @@ void handleWriteSample(String args) {
     }
   }
 
-  if (sample_type == "RAW" && purity != "") {
-    depleted = purity;  // In RAW, treat purity field as depleted
-    purity = "\0"; // This will actually set it to be empty while writing
-  }
-  if (depleted == ""){
-    depleted == "ACTIVE"; // Set the default value
+  if (depleted == "") {
+    depleted = "ACTIVE"; // Set the default value
   }
   if (depleted != "" && !isValidDepleted(depleted)) {
-    Serial.println("Invalid depleted value.");
+    Serial.print("Invalid depleted value: ");
+    Serial.println(depleted);
     return;
   }
 
@@ -270,6 +270,7 @@ void handleWriteSample(String args) {
   purity_to_write = purity;
   depleted_to_write = depleted;
 }
+
 
 // Function to read a block and return the data as a string
 String readBlock(byte block) {
@@ -329,7 +330,7 @@ bool writeCardMemory(int blockNum, String data) {
     blockData[i] = '\0';
   }
 
-  Serial.print("WRiting to block ");
+  Serial.print("Writing to block ");
   Serial.print(blockNum);
   Serial.print(" data: ");
   Serial.println(data);
@@ -401,7 +402,7 @@ void loop() {
       }
 
       if(purity_to_write != "") {
-        if(purity_to_write = "\0") {
+        if(purity_to_write == "!") { // Special case, since we use empty strings as a way to check if we should do something, we use "!" as indication that stuff needs to be deleted
           writeCardMemory(12, "");
         } else {
           writeCardMemory(12, purity_to_write);
