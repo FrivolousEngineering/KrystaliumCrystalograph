@@ -27,8 +27,13 @@ String primary_target_to_write = "";  // stored in block 6
 String secondary_action_to_write = ""; // stored in block 8 (We skip block 7 as writing there would break the card
 String secondary_target_to_write = ""; // stored in block 9
 String depleted_to_write = ""; // stored in block 10
-String vulgarity_to_write = ""; // stsored in block 12
+String purity_to_write = ""; // stored in block 12
 
+const char* validPurities[] = {
+  "POLLUTED", "TARNISHED", "DIRTY", "BLEMISHED",
+  "IMPURE", "UNBLEMISHED", "LUCID", "STAINLESS",
+  "PRISTINE", "IMMACULATE", "PERFECT"
+};
 
 const char* validActions[] = {
   "EXPANDING", "CONTRACTING", "CONDUCTING", "INSULATING",
@@ -190,10 +195,10 @@ void handleWriteSample(String args) {
   int index4 = args.indexOf(' ', index3 + 1);
   int index5 = args.indexOf(' ', index4 + 1);
   int index6 = args.indexOf(' ', index5 + 1);
-
+  
   // Validate minimum required parameters
-  if (index1 == -1 || index2 == -1 || index3 == -1 || index4 == -1) {
-    Serial.println("Invalid WRITESAMPLE format. Usage: WRITESAMPLE {sample_type} {primary_action} {primary_target} {secondary_action} {secondary_target} [depleted] [vulgarity]");
+  if (index1 == -1 || index2 == -1 || index3 == -1 || index4 == -1 || index5 == -1) {
+    Serial.println("Invalid WRITESAMPLE format. Usage: WRITESAMPLE {sample_type} {primary_action} {primary_target} {secondary_action} {secondary_target} [purity] [depleted]");
     return;
   }
 
@@ -202,53 +207,58 @@ void handleWriteSample(String args) {
   String primary_action = args.substring(index1 + 1, index2);
   String primary_target = args.substring(index2 + 1, index3);
   String secondary_action = args.substring(index3 + 1, index4);
-  String secondary_target = (index5 != -1) ? args.substring(index4 + 1, index5) : args.substring(index4 + 1);
+  String secondary_target = args.substring(index4 + 1, index5);
 
-  // Extract optional parameters
+  // Optional parameters
+  String purity = "";
   String depleted = "";
-  String vulgarity = "";
 
-  if (index5 != -1) {
-    String remaining = args.substring(index5 + 1);
-    int space_check = remaining.indexOf(' ');
-
-    if (space_check == -1) {
-      depleted = remaining;  // Only one word left, treat as depleted
-    } else {
-      depleted = remaining.substring(0, space_check);
-      vulgarity = remaining.substring(space_check + 1);  // Remaining part is vulgarity
-    }
+  // Handle optional parameters for REFINED samples
+  if (index6 != -1) {
+    purity = args.substring(index5 + 1, index6);
+    depleted = args.substring(index6 + 1);
+  } else {
+    purity = args.substring(index5 + 1);
   }
 
-  // Validate core parameters
+  // Validation
   if (sample_type != "RAW" && sample_type != "REFINED") {
     Serial.println("Invalid sample type. Use RAW or REFINED.");
     return;
   }
+
   if (!isValidAction(primary_action) || !isValidAction(secondary_action)) {
     Serial.println("Invalid action detected.");
     return;
   }
+
   if (!isValidTarget(primary_target) || !isValidTarget(secondary_target)) {
     Serial.println("Invalid target detected.");
     return;
   }
 
-  // Optional parameter validation
+  // Specific validation for REFINED
+  if (sample_type == "REFINED") {
+    if (purity == "") {
+      Serial.println("Purity is required for REFINED samples.");
+      return;
+    }
+    if (!isValidPurity(purity)) {
+      Serial.println("Invalid purity value.");
+      return;
+    }
+  }
+
+  if (sample_type == "RAW" && purity != "") {
+    depleted = purity;  // In RAW, treat purity field as depleted
+    purity = "";
+  }
+  if (depleted == ""){
+    depleted == "ACTIVE"; // Set the default value
+  }
   if (depleted != "" && !isValidDepleted(depleted)) {
     Serial.println("Invalid depleted value.");
     return;
-  }
-  if (vulgarity != "") {
-    if (!isValidVulgarity(vulgarity)) {
-      Serial.print("Invalid vulgarity value: ");
-      Serial.println(vulgarity);
-      return;
-    }
-    if (sample_type == "RAW") {
-      Serial.println("Can't set vulgarity on raw samples.");
-      return;
-    }
   }
 
   // Assign values to global variables
@@ -257,10 +267,9 @@ void handleWriteSample(String args) {
   primary_target_to_write = primary_target;
   secondary_action_to_write = secondary_action;
   secondary_target_to_write = secondary_target;
+  purity_to_write = purity;
   depleted_to_write = depleted;
-  vulgarity_to_write = vulgarity;
 }
-
 
 // Function to read a block and return the data as a string
 String readBlock(byte block) {
@@ -391,9 +400,9 @@ void loop() {
         depleted_to_write = "";
       }
 
-      if(vulgarity_to_write != "") {
-        writeCardMemory(12, vulgarity_to_write);
-        vulgarity_to_write = "";
+      if(purity_to_write != "") {
+        writeCardMemory(12, purity_to_write);
+        purity_to_write = "";
       }
 
       bool dataRead = false;
@@ -407,7 +416,7 @@ void loop() {
         if (!firstBlock) {
           Serial.print(" ");  // Print space between blocks, but not before the first one
         }
-    
+        
         Serial.print(blockData);
         dataRead = true;
         firstBlock = false;  // After the first block, add spaces for subsequent blocks
@@ -456,6 +465,16 @@ bool isValidTarget(const String& target) {
   }
   return false;
 }
+
+bool isValidPurity(const String& purity) {
+  for (const char* validPurity : validPurities) {
+    if (purity.equals(validPurity)) {
+        return true;
+    }
+  }
+  return false;
+}
+
 
 bool isValidVulgarity(const String& vulgarity) {
   for (const char* validVulgarity : validVulgarities) {
