@@ -13,7 +13,7 @@ int errorCount = 0;
 const int errorThreshold = 3;
 String detected_tag = "";
 bool printMemory = false;
-bool printCardType = true;
+bool printCardType = false;
 String data_to_write = "";
 byte blockData [16] = {};
 byte buffer[18]; // To hold the read data
@@ -174,13 +174,13 @@ void processCommand(String command) {
       Serial.println("Unknown krystalium type. Only RAW and REFINED are supported");
       return;
     }
-    data_to_write = argument;  // Store data for writing
-  } else if (keyword == "WRITEACTION1") {
-    if(!isValidAction(argument)){
-      Serial.println("Unknown action :(");
+    sample_type_to_write = argument;  // Store data for writing
+  } else if (keyword == "WRITEDEPLETION") {
+    if(!isValidDepleted(argument)){
+      Serial.println("Unknown depletionstate");
       return;
     }
-    Serial.println("BJOOP");
+    depleted_to_write = argument;
   } else if (keyword == "WRITESAMPLE") {
     handleWriteSample(argument);
   } else {
@@ -318,7 +318,7 @@ bool writeDataToBlock(int blockNum, byte blockData[])
     Serial.println(mfrc522.GetStatusCodeName(status));
     return false;
   } 
-  Serial.println("Writing complete! ");
+  // Serial.println("Writing complete! ");
   return true;
 }
 
@@ -330,10 +330,10 @@ bool writeCardMemory(int blockNum, String data) {
     blockData[i] = '\0';
   }
 
-  Serial.print("Writing to block ");
+  /*Serial.print("Writing to block ");
   Serial.print(blockNum);
   Serial.print(" data: ");
-  Serial.println(data);
+  Serial.println(data);*/
   ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
   return writeDataToBlock(blockNum, blockData);
 }
