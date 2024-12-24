@@ -392,22 +392,34 @@ void loop() {
       }
 
       if(vulgarity_to_write != "") {
-        writeCardMemory(10, vulgarity_to_write);
+        writeCardMemory(12, vulgarity_to_write);
         vulgarity_to_write = "";
       }
 
-      // TODO: Expand to include multiple blocks
+      bool dataRead = false;
+      bool firstBlock = true;
+
       for (int i = 0; i < sizeof(blocks_to_read) / sizeof(blocks_to_read[0]); i++) {
         if (blocks_to_read[i] == 0) break;
         int current_block = blocks_to_read[i];
         String blockData = readBlock(current_block);
-        Serial.print("Data in Block ");
-        Serial.print(current_block);
-        Serial.print(": ");
-        Serial.println(blockData);
+    
+        if (!firstBlock) {
+          Serial.print(" ");  // Print space between blocks, but not before the first one
+        }
+    
+        Serial.print(blockData);
+        dataRead = true;
+        firstBlock = false;  // After the first block, add spaces for subsequent blocks
+    
         ignore_card_remove_event = true;
       }
-      memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
+
+if (dataRead) {
+    memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
+    Serial.println();
+}
+      
     }
     errorCount = 0;
   } else {
