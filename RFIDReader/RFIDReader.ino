@@ -133,6 +133,13 @@ void readCardMemoryNTAG() {
   }
 }
 
+String padToBytesLength(String data, int length = 12) {
+  while (data.length() < length) {
+    data += ' ';
+  }
+  return data;
+}
+
 /**
  * Write a string that is larger than 4 bytes to a card. 
  * Note that pages are 4 bytes. So when writing 5 bytes, we will use
@@ -143,7 +150,7 @@ void readCardMemoryNTAG() {
  * This means it's possible to brick tags if you are not carefull.
  */
 bool writeLargeStringToNTAG(byte startPage, String data) {
-  data = padTo12Bytes(data, 12); // We pad them to 12 to ensure any old data is overridden.
+  data = padToBytesLength(data, 12); // We pad them to 12 to ensure any old data is overridden.
   int length = data.length();
   int pageOffset = 0;
   
@@ -171,12 +178,7 @@ bool writeLargeStringToNTAG(byte startPage, String data) {
   return true;
 }
 
-String padToBytesLength(String data, int length = 12) {
-  while (data.length() < length) {
-    data += ' ';
-  }
-  return data;
-}
+
 
 bool writeDataToPageNTAG(byte page, byte* data) {
   MFRC522::StatusCode status;
@@ -254,9 +256,18 @@ void processCommand(String command) {
     data_to_write = argument;  // Store data for writing
     ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
   } else if (keyword == "READ") {
+    memset(blocks_to_read, 0, sizeof(blocks_to_read));  // Clear the array
     if(argument == "ALL"){
-      int all_blocks[] = {4, 5, 6, 8, 9, 10, 12};
-      memcpy(blocks_to_read, all_blocks, sizeof(all_blocks));
+      int index = 0;   
+      // Add all mapped blocks/pages to the read list
+      blocks_to_read[index++] = activeMapping.sample_type;
+      blocks_to_read[index++] = activeMapping.primary_action;
+      blocks_to_read[index++] = activeMapping.primary_target;
+      blocks_to_read[index++] = activeMapping.secondary_action;
+      blocks_to_read[index++] = activeMapping.secondary_target;
+      blocks_to_read[index++] = activeMapping.depleted;
+      blocks_to_read[index++] = activeMapping.purity;
+
     } else {
       int single_block[] = {argument.toInt()};
       memcpy(blocks_to_read, single_block, sizeof(single_block));
@@ -378,7 +389,18 @@ void handleWriteSample(String args) {
 }
 
 
-// Function to read a block and return the data as a string
+String readLargeStringFromNTAG(byte startPage, int maxPages = 3) {
+  String result = "";
+  
+  for (byte i = 0; i < maxPages; i++) {
+    result += readPage(startPage+i);
+  }
+  
+  return trimTrailingSpaces(result);
+}
+
+
+// Function to read a block from mifare and return the data as a string
 String readBlock(byte block) {
   // Authenticate the block (use key A)
   status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
@@ -547,13 +569,18 @@ void loop() {
       for (int i = 0; i < sizeof(blocks_to_read) / sizeof(blocks_to_read[0]); i++) {
         if (blocks_to_read[i] == 0) break;
         int current_block = blocks_to_read[i];
-        String blockData = readBlock(current_block);
+        String result = "";
+        if(is_ntag){
+          result = readLargeStringFromNTAG(current_block);
+        } else {
+          result = readBlock(current_block);
+        }
     
         if (!firstBlock) {
           Serial.print(" ");  // Print space between blocks, but not before the first one
         }
         
-        Serial.print(blockData);
+        Serial.print(result);
         dataRead = true;
         firstBlock = false;  // After the first block, add spaces for subsequent blocks
     
@@ -581,6 +608,16 @@ void loop() {
       }
     }
   }
+}
+
+
+String trimTrailingSpaces(String data) {
+  int i = data.length() - 1;
+  while (i >= 0 && (data[i] == ' ' || data[i] == '\t' || data[i] == '\n' || data[i] == '\r')) {
+    data.remove(i);  // Remove the character at position i
+    i--;
+  }
+  return data;
 }
 
 bool isValidAction(const String& action) {
