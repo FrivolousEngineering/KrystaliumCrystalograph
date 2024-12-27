@@ -12,22 +12,40 @@ MFRC522::StatusCode status;
 int errorCount = 0;
 const int errorThreshold = 3;
 String detected_tag = "";
-bool printMemory = false;
+bool printMemory = true;
 bool printCardType = false;
 String data_to_write = "";
 byte blockData [16] = {};
 byte buffer[18]; // To hold the read data
 int blocks_to_read[10] = {0};
 bool ignore_card_remove_event = false;
-bool is_ntag = true; // Are we using ntag chips (for now just hardcoded. In the future we might want to be able to read both so we would need detection)
+bool is_ntag = true; // Are we using ntag chips
 
-String sample_type_to_write = "";  // Stored in block 4
-String primary_action_to_write = ""; // stored in block 5
-String primary_target_to_write = "";  // stored in block 6
-String secondary_action_to_write = ""; // stored in block 8 (We skip block 7 as writing there would break the card
-String secondary_target_to_write = ""; // stored in block 9
-String depleted_to_write = ""; // stored in block 10
-String purity_to_write = ""; // stored in block 12
+
+struct MemoryMap {
+  byte sample_type;
+  byte primary_action;
+  byte primary_target;
+  byte secondary_action;
+  byte secondary_target;
+  byte depleted;
+  byte purity;
+};
+
+// Define the memory mapping on the chips. Note that the numbers mean something quite different for both of em.
+// Mifare use adresses that are 16 bytes, ntag uses adresses that are 4 bytes. 
+MemoryMap mifareMapping = {4, 5, 6, 8, 9, 10, 12};
+MemoryMap ntagMapping = {6, 9, 12, 15, 18, 21, 24};
+
+MemoryMap activeMapping; 
+
+String sample_type_to_write = ""; 
+String primary_action_to_write = ""; 
+String primary_target_to_write = "";  
+String secondary_action_to_write = ""; 
+String secondary_target_to_write = ""; 
+String depleted_to_write = ""; 
+String purity_to_write = "";
 
 const char* validPurities[] = {
   "POLLUTED", "TARNISHED", "DIRTY", "BLEMISHED",
@@ -113,6 +131,64 @@ void readCardMemoryNTAG() {
     Serial.print(": ");
     Serial.println(data);
   }
+}
+
+/**
+ * Write a string that is larger than 4 bytes to a card. 
+ * Note that pages are 4 bytes. So when writing 5 bytes, we will use
+ * 2 pages (aka; 8 bytes of memory). For convenience sake we don't do
+ * any fragmentation or packing. 
+ * We also don't have any protection to check if we are going over memory or 
+ * if we are writing in memory that you shouldn't be writing to as of yet. 
+ * This means it's possible to brick tags if you are not carefull.
+ */
+bool writeLargeStringToNTAG(byte startPage, String data) {
+  data = padTo12Bytes(data, 12); // We pad them to 12 to ensure any old data is overridden.
+  int length = data.length();
+  int pageOffset = 0;
+  
+  // Iterate through the string in chunks of 4 bytes
+  for (int i = 0; i < length; i += 4) {
+    byte buffer[4] = {0x00, 0x00, 0x00, 0x00};  // Initialize 4-byte buffer
+
+    // Copy 4 bytes or less from the string into the buffer
+    for (int j = 0; j < 4; j++) {
+      if ((i + j) < length) {
+        buffer[j] = data[i + j];
+      } else {
+        buffer[j] = 0x00;  // Padding if the string is shorter than 4 bytes
+      }
+    }
+    
+    // Write to the current page
+    if (!writeDataToPageNTAG(startPage + pageOffset, buffer)) {
+      Serial.println("Failed to write large string.");
+      return false;
+    }
+    
+    pageOffset++;
+  }
+  return true;
+}
+
+String padToBytesLength(String data, int length = 12) {
+  while (data.length() < length) {
+    data += ' ';
+  }
+  return data;
+}
+
+bool writeDataToPageNTAG(byte page, byte* data) {
+  MFRC522::StatusCode status;
+  status = mfrc522.MIFARE_Ultralight_Write(page, data, 4);
+  if (status != MFRC522::STATUS_OK) {
+    Serial.print("Write failed at page ");
+    Serial.print(page);
+    Serial.print(": ");
+    Serial.println(mfrc522.GetStatusCodeName(status));
+    return false;
+  }
+  return true;
 }
 
 void readCardMemoryMifare() {
@@ -355,16 +431,42 @@ bool writeDataToBlock(int blockNum, byte blockData[]) {
 }
 
 bool writeCardMemory(int blockNum, String data) {
-  byte blockData[16]; // 16 bytes for the block
-  data.getBytes(blockData, 16); // Copy the string to the byte array
-  // Fill the rest of the block with empty data
-  for (int i = data.length(); i < 16; i++) {
-    blockData[i] = '\0';
+  if(is_ntag){
+    return writeLargeStringToNTAG(blockNum, data);
+  } else {
+    byte blockData[16]; // 16 bytes for the block
+    data.getBytes(blockData, 16); // Copy the string to the byte array
+    // Fill the rest of the block with empty data
+    for (int i = data.length(); i < 16; i++) {
+      blockData[i] = '\0';
+    }
+  
+    ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
+    return writeDataToBlock(blockNum, blockData);
   }
-
-  ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
-  return writeDataToBlock(blockNum, blockData);
 }
+
+void detectCardType() {
+  MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+  // Some debug prints
+  if(printCardType) { 
+    Serial.print(F("PICC type: "));
+    MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+    Serial.println(mfrc522.PICC_GetTypeName(piccType));
+  }
+  if (piccType == MFRC522::PICC_TYPE_MIFARE_1K) {
+    Serial.println("MIFARE Classic detected.");
+    activeMapping = mifareMapping;
+    is_ntag = false;
+  } else if (piccType == MFRC522::PICC_TYPE_MIFARE_UL) {
+    Serial.println("NTAG detected.");
+    is_ntag = true;
+    activeMapping = ntagMapping;
+  } else {
+    Serial.println("Unknown card type.");
+  }
+}
+
 
 void loop() {
   if (Serial.available() > 0) {
@@ -380,12 +482,9 @@ void loop() {
         // We're not ignoring the "new card" event.
         Serial.print("Tag found: ");
         Serial.println(detected_tag);
-        // Some debug prints
-        if(printCardType) { 
-          Serial.print(F("PICC type: "));
-          MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-          Serial.println(mfrc522.PICC_GetTypeName(piccType));
-        }
+
+        detectCardType();
+        
         if (printMemory) {
           if(is_ntag) {
              readCardMemoryNTAG();
@@ -403,41 +502,41 @@ void loop() {
       // on the writing. We couldn't just use a normal retry, as it would try the same thing without allowing the states (or whatever the fuck is causing this)
       // to change. So future me (or idk, whoever reads this), learn from my folley. That retry stuff for the newCard present is there for a reason and it also affects the writing stuff. 
       if(data_to_write != "") {
-        writeCardMemory(4, data_to_write);
+        writeCardMemory(activeMapping.sample_type, data_to_write);
       } 
 
       if(sample_type_to_write != "") {
-        writeCardMemory(4, sample_type_to_write);
+        writeCardMemory(activeMapping.sample_type, sample_type_to_write);
         sample_type_to_write = "";
       } 
       if(primary_action_to_write != "") {
-        writeCardMemory(5, primary_action_to_write);
+        writeCardMemory(activeMapping.primary_action, primary_action_to_write);
         primary_action_to_write = "";
       }
       if(primary_target_to_write != "") {
-        writeCardMemory(6, primary_target_to_write);
+        writeCardMemory(activeMapping.primary_target, primary_target_to_write);
         primary_target_to_write = "";
       }
 
       if(secondary_action_to_write != "") {
-        writeCardMemory(8, secondary_action_to_write);
+        writeCardMemory(activeMapping.secondary_action, secondary_action_to_write);
         secondary_action_to_write = "";
       }
       if(secondary_target_to_write != "") {
-        writeCardMemory(9, secondary_target_to_write);
+        writeCardMemory(activeMapping.secondary_target, secondary_target_to_write);
         secondary_target_to_write = "";
       }
 
       if(depleted_to_write != "") {
-        writeCardMemory(10, depleted_to_write);
+        writeCardMemory(activeMapping.depleted, depleted_to_write);
         depleted_to_write = "";
       }
 
       if(purity_to_write != "") {
         if(purity_to_write == "!") { // Special case, since we use empty strings as a way to check if we should do something, we use "!" as indication that stuff needs to be deleted
-          writeCardMemory(12, "");
+          writeCardMemory(activeMapping.purity, "");
         } else {
-          writeCardMemory(12, purity_to_write);
+          writeCardMemory(activeMapping.purity, purity_to_write);
         }
         purity_to_write = "";
       }
@@ -511,7 +610,6 @@ bool isValidPurity(const String& purity) {
   return false;
 }
 
-
 bool isValidVulgarity(const String& vulgarity) {
   for (const char* validVulgarity : validVulgarities) {
     if (vulgarity.equals(validVulgarity)) {
@@ -520,7 +618,6 @@ bool isValidVulgarity(const String& vulgarity) {
   }
   return false;
 }
-
 
 void writeStringToEEPROM(int addrOffset, const String &strToWrite) {
   byte len = strToWrite.length();
