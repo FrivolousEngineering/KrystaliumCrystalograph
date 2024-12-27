@@ -19,6 +19,7 @@ byte blockData [16] = {};
 byte buffer[18]; // To hold the read data
 int blocks_to_read[10] = {0};
 bool ignore_card_remove_event = false;
+bool is_ntag = true; // Are we using ntag chips (for now just hardcoded. In the future we might want to be able to read both so we would need detection)
 
 String sample_type_to_write = "";  // Stored in block 4
 String primary_action_to_write = ""; // stored in block 5
@@ -85,7 +86,37 @@ void printHex(byte *buffer, byte bufferSize) {
   Serial.println();
 }
 
-void readCardMemory() {
+/**
+ * Read string from a 4 byte ntag page
+ */
+String readPage(byte page) {
+  byte buffer[18];
+  byte size = sizeof(buffer);
+  MFRC522::StatusCode status = mfrc522.MIFARE_Read(page, buffer, &size);
+  if (status != MFRC522::STATUS_OK) {
+    Serial.print("Failed to read page ");
+    Serial.println(page);
+    return "";
+  }
+  String data = "";
+  for (byte i = 0; i < 4; i++) {
+    data += buffer[i] != 0 ? (char)buffer[i] : ' ';
+  }
+  return data;
+}
+
+void readCardMemoryNTAG() {
+  for (byte page = 0; page < 45; page++) {  // Adjust based on NTAG type (213=45, 215=135)
+    String data = readPage(page);
+    Serial.print("Page ");
+    Serial.print(page);
+    Serial.print(": ");
+    Serial.println(data);
+  }
+}
+
+void readCardMemoryMifare() {
+  // Mifare style reading.
   byte buffer[18];
   byte size = sizeof(buffer);
   MFRC522::StatusCode status;
@@ -356,7 +387,11 @@ void loop() {
           Serial.println(mfrc522.PICC_GetTypeName(piccType));
         }
         if (printMemory) {
-          readCardMemory();
+          if(is_ntag) {
+             readCardMemoryNTAG();
+          } else {
+            readCardMemoryMifare();
+          }
         }
       } else {
         // If we are ignoring an event, we should start listening after ignoring it once.
