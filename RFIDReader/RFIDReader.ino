@@ -20,7 +20,6 @@ byte buffer[18]; // To hold the read data
 int blocks_to_read[10] = {0};
 bool ignore_card_remove_event = false;
 
-
 String sample_type_to_write = "";  // Stored in block 4
 String primary_action_to_write = ""; // stored in block 5
 String primary_target_to_write = "";  // stored in block 6
@@ -301,8 +300,10 @@ String readBlock(byte block) {
   return data;
 }
 
-bool writeDataToBlock(int blockNum, byte blockData[]) 
-{
+/**
+ * Write data to mifare styled memory
+ */
+bool writeDataToBlock(int blockNum, byte blockData[]) {
   // Authenticating the desired data block for write access using Key A
   status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockNum, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
@@ -330,10 +331,6 @@ bool writeCardMemory(int blockNum, String data) {
     blockData[i] = '\0';
   }
 
-  /*Serial.print("Writing to block ");
-  Serial.print(blockNum);
-  Serial.print(" data: ");
-  Serial.println(data);*/
   ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
   return writeDataToBlock(blockNum, blockData);
 }
