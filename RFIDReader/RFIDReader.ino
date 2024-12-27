@@ -6,6 +6,8 @@
 #define RST_PIN  9
 #define SS_PIN 10
 
+#define MAX_CMD_LEN 128
+
 // ESP PINOUT
 //#define SS_PIN 5
 //#define RST_PIN 0
@@ -24,7 +26,6 @@ byte blockData [16] = {};
 byte buffer[18]; // To hold the read data
 int blocks_to_read[10] = {0};
 bool ignore_card_remove_event = false;
-bool is_ntag = true; // Are we using ntag chips
 
 
 struct MemoryMap {
@@ -39,18 +40,18 @@ struct MemoryMap {
 
 // Define the memory mapping on the chips. Note that the numbers mean something quite different for both of em.
 // Mifare use adresses that are 16 bytes, ntag uses adresses that are 4 bytes. 
-MemoryMap mifareMapping = {4, 5, 6, 8, 9, 10, 12};
-MemoryMap ntagMapping = {6, 9, 12, 15, 18, 21, 24};
+//MemoryMap mifareMapping = {4, 5, 6, 8, 9, 10, 12};
+//MemoryMap ntagMapping = {6, 9, 12, 15, 18, 21, 24};
 
-MemoryMap activeMapping; 
+MemoryMap activeMapping = {6, 10, 14, 18, 22, 26, 30};
 
-String sample_type_to_write = ""; 
-String primary_action_to_write = ""; 
-String primary_target_to_write = "";  
-String secondary_action_to_write = ""; 
-String secondary_target_to_write = ""; 
-String depleted_to_write = ""; 
-String purity_to_write = "";
+char* sample_type_to_write = ""; 
+char* primary_action_to_write = ""; 
+char* primary_target_to_write = "";  
+char* secondary_action_to_write = ""; 
+char* secondary_target_to_write = ""; 
+char* depleted_to_write = ""; 
+char* purity_to_write = "";
 
 const char validPurities[][12] PROGMEM = {
   "POLLUTED", "TARNISHED", "DIRTY", "BLEMISHED",
@@ -81,10 +82,6 @@ void setup() {
   for (byte i = 0; i < 6; i++) {
     key.keyByte[i] = 0xFF;
   }
-  
-#if defined(ESP32) || defined(ESP8266)
-  EEPROM.begin(512);  // ESPS need to initialize EEPROM size. The Nano doesn't need to.
-#endif
 }
 
 String toHexString(byte *buffer, byte bufferSize) {
@@ -133,7 +130,7 @@ void readCardMemoryNTAG() {
   }
 }
 
-String padToBytesLength(String data, int length = 12) {
+String padToBytesLength(String data, int length = 16) {
   while (data.length() < length) {
     data += ' ';
   }
@@ -150,7 +147,7 @@ String padToBytesLength(String data, int length = 12) {
  * This means it's possible to brick tags if you are not carefull.
  */
 bool writeLargeStringToNTAG(byte startPage, String data) {
-  data = padToBytesLength(data, 12); // We pad them to 12 to ensure any old data is overridden.
+  data = padToBytesLength(data, 16); // We pad them to 12 to ensure any old data is overridden.
   int length = data.length();
   int pageOffset = 0;
   
@@ -226,171 +223,133 @@ bool isValidDepleted(const String& depleted) {
   return depleted == "DEPLETED" || depleted == "ACTIVE";
 }
 
+void trim(char* str) {
+  int len = strlen(str);
+  while (len > 0 && (str[len - 1] == '\r' || str[len - 1] == '\n' || str[len - 1] == ' ')) {
+    str[--len] = '\0';
+  }
+}
 
 void processCommand(String command) {
-  command.trim();
-  
-  int spaceIndex = command.indexOf(' ');  
-  String keyword = (spaceIndex != -1) ? command.substring(0, spaceIndex) : command;
-  String argument = (spaceIndex != -1) ? command.substring(spaceIndex + 1) : "";
-  
-  // Convert keyword to uppercase
-  keyword.toUpperCase();
 
-  // Convert argument to uppercase unless it's for WRITE
-  if(keyword != "WRITE" && keyword != "NAME"){
-    argument.toUpperCase();
+  char cmdBuffer[MAX_CMD_LEN];
+  memset(cmdBuffer, 0, sizeof(cmdBuffer));  // Clear buffer to prevent leftover data
+
+  // Ensure we don't overflow
+  int len = command.length();
+  if (len >= MAX_CMD_LEN) {
+    Serial.println("Command too long");
+    return;
   }
   
-  if (keyword == "MREAD") {
-    if (argument == "ON") {
-      printMemory = true;
-      Serial.println("Memory print enabled");
-    } else if (argument == "OFF") {
-      printMemory = false;
-      Serial.println("Memory print disabled");
-    } else {
-      Serial.println("Unknown MREAD argument");
-    }
-  } else if (keyword == "WRITE") {
-    data_to_write = argument;  // Store data for writing
-    ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
-  } else if (keyword == "READ") {
-    memset(blocks_to_read, 0, sizeof(blocks_to_read));  // Clear the array
-    if(argument == "ALL"){
-      int index = 0;   
-      // Add all mapped blocks/pages to the read list
-      blocks_to_read[index++] = activeMapping.sample_type;
-      blocks_to_read[index++] = activeMapping.primary_action;
-      blocks_to_read[index++] = activeMapping.primary_target;
-      blocks_to_read[index++] = activeMapping.secondary_action;
-      blocks_to_read[index++] = activeMapping.secondary_target;
-      blocks_to_read[index++] = activeMapping.depleted;
-      blocks_to_read[index++] = activeMapping.purity;
+  command.toCharArray(cmdBuffer, MAX_CMD_LEN);
+  cmdBuffer[sizeof(cmdBuffer) - 1] = '\0';
+  
+  trim(cmdBuffer);  // Trim newlines and trailing spaces
+  
+  char* keyword = strtok(cmdBuffer, " ");
+  char* argument = strtok(NULL, "");
 
-    } else {
-      int single_block[] = {argument.toInt()};
-      memcpy(blocks_to_read, single_block, sizeof(single_block));
-    }
-  } else if (keyword == "NAME") {
-    // Setting the name commands (used to control the name of the device). If we run this on a ESP, we have much better way of doing this.
-    // On a duino nano there isn't a simple way to get a unique identifier, so we just have to store it to eeprom.
-    if(argument != ""){
-      // Keyword was provided, print it
-      writeStringToEEPROM(0, argument);
-      Serial.print("Setting name: ");
-      Serial.println(argument);
-    } else {
-      // Print the keyword out
-      String retrievedString = readStringFromEEPROM(0);
-      Serial.print("Name: ");
-      Serial.println(retrievedString);
-    }
-  } else if (keyword == "WRITETYPE") {
-    if(argument != "REFINED" && argument != "RAW"){
-      Serial.println("Only RAW and REFINED");
-      return;
-    }
-    sample_type_to_write = argument;  // Store data for writing
-  } else if (keyword == "WRITEDEPLETION") {
-    if(!isValidDepleted(argument)){
-      Serial.println("Unknown depletionstate");
-      return;
-    }
-    depleted_to_write = argument;
-  } else if (keyword == "WRITESAMPLE") {
+  if (keyword == NULL) return;
+  strupr(keyword);  // Convert keyword to uppercase
+
+  if (argument != NULL && strcmp(keyword, "WRITE") != 0) {
+    strupr(argument);
+  }
+
+  if (strcmp(keyword, "WRITESAMPLE") == 0 && argument != NULL) {
     handleWriteSample(argument);
-  } else {
+  } else if (strcmp(keyword, "READ") == 0) {
+    handleReadCommand(argument);
+  } 
+  else if (strcmp(keyword, "NAME") == 0) {
+    handleNameCommand(argument);
+  } 
+  else {
     Serial.print("Unknown command: ");
     Serial.println(keyword);
   }
 }
 
-void handleWriteSample(String args) {
-  int index1 = args.indexOf(' ');
-  int index2 = args.indexOf(' ', index1 + 1);
-  int index3 = args.indexOf(' ', index2 + 1);
-  int index4 = args.indexOf(' ', index3 + 1);
-  int index5 = args.indexOf(' ', index4 + 1);
-  int index6 = args.indexOf(' ', index5 + 1);
-  
-  // Validate minimum required parameters
-  if (index1 == -1 || index2 == -1 || index3 == -1 || index4 == -1) {
-    Serial.println("Invalid WRITESAMPLE format. Usage: WRITESAMPLE {sample_type} {primary_action} {primary_target} {secondary_action} {secondary_target} [purity] [depleted]");
+void handleWriteSample(char* args) {
+  char* sample_type = strtok(args, " ");
+  char* primary_action = strtok(NULL, " ");
+  char* primary_target = strtok(NULL, " ");
+  char* secondary_action = strtok(NULL, " ");
+  char* secondary_target = strtok(NULL, " ");
+  char* purity = strtok(NULL, " ");
+  char* depleted = strtok(NULL, " ");
+
+  if (!sample_type || !primary_action || !primary_target || !secondary_action || !secondary_target) {
+    Serial.println("Invalid WRITESAMPLE format.");
     return;
   }
 
-  // Extract required parameters
-  String sample_type = args.substring(0, index1);
-  String primary_action = args.substring(index1 + 1, index2);
-  String primary_target = args.substring(index2 + 1, index3);
-  String secondary_action = args.substring(index3 + 1, index4);
-  String secondary_target = args.substring(index4 + 1, index5);
-
-  // Optional parameters
-  String purity = "";
-  String depleted = "";
-
-  // Validation
-  if (sample_type != "RAW" && sample_type != "REFINED") {
+  if (strcmp(sample_type, "RAW") != 0 && strcmp(sample_type, "REFINED") != 0) {
     Serial.println("Invalid sample type.");
     return;
   }
-  if (sample_type == "RAW") {
-    if(index5 != -1) {
-      depleted = args.substring(index5 + 1);
+
+  if (strcmp(sample_type, "REFINED") == 0) {
+    if (!purity) {
+      Serial.println("Purity missing for REFINED sample.");
+      return;
     }
-    purity = "!"; // This will actually set it to be empty while writing 
   } else {
-    purity = args.substring(index5 + 1, index6);
-    if(index6 != -1) {
-      depleted = args.substring(index6 + 1);
-    }
-  }
-  
-  if (!isValidAction(primary_action) || !isValidAction(secondary_action)) {
-    Serial.println("Invalid action detected.");
-    return;
+    purity = "!";  // RAW samples overwrite purity
   }
 
-  if (!isValidTarget(primary_target) || !isValidTarget(secondary_target)) {
-    Serial.println("Invalid target detected.");
-    return;
+  if (!depleted) {
+    depleted = "ACTIVE";  // Default value
   }
 
-  // Specific validation for REFINED
-  if (sample_type == "REFINED") {
-    if (purity == "") {
-      Serial.println("Purity not set.");
-      return;
-    }
-    if (!isValidPurity(purity.c_str())) {
-      Serial.println("Invalid purity value.");
-      return;
-    }
-  }
-
-  if (depleted == "") {
-    depleted = "ACTIVE"; // Set the default value
-  }
-  if (depleted != "" && !isValidDepleted(depleted)) {
-    Serial.print("Invalid depleted value: ");
-    Serial.println(depleted);
-    return;
-  }
-
-  // Assign values to global variables
+  // Prepare the data to be written (this won't always work if we do it now as the card flips between being able to be read and not).
+  // So we store them for the next loop when the reader is working correctly
   sample_type_to_write = sample_type;
-  primary_action_to_write = primary_action;
   primary_target_to_write = primary_target;
-  secondary_action_to_write = secondary_action;
+  primary_action_to_write = primary_action;
   secondary_target_to_write = secondary_target;
-  purity_to_write = purity;
+  secondary_action_to_write = secondary_action;
   depleted_to_write = depleted;
+  purity_to_write = purity;
+
+  Serial.println("Write complete!");
 }
 
+void handleReadCommand(char* argument) {
+  memset(blocks_to_read, 0, sizeof(blocks_to_read));
+  
+  if (strcmp(argument, "ALL") == 0) {
+    int index = 0;
+    blocks_to_read[index++] = activeMapping.sample_type;
+    blocks_to_read[index++] = activeMapping.primary_action;
+    blocks_to_read[index++] = activeMapping.primary_target;
+    blocks_to_read[index++] = activeMapping.secondary_action;
+    blocks_to_read[index++] = activeMapping.secondary_target;
+    blocks_to_read[index++] = activeMapping.depleted;
+    blocks_to_read[index++] = activeMapping.purity;
+  } 
+  else {
+    int blockNum = atoi(argument);
+    blocks_to_read[0] = blockNum;
+  }
+}
 
-String readLargeStringFromNTAG(byte startPage, int maxPages = 3) {
+void handleNameCommand(char* argument) {
+  if (argument != NULL) {
+    writeStringToEEPROM(0, argument);
+    Serial.print("Setting name: ");
+    Serial.println(argument);
+  } 
+  else {
+    char nameBuffer[32];
+    readStringFromEEPROM(0, nameBuffer, sizeof(nameBuffer));
+    Serial.print("Name: ");
+    Serial.println(nameBuffer);
+  }
+}
+
+String readLargeStringFromNTAG(byte startPage, int maxPages = 4) {
   String result = "";
   
   for (byte i = 0; i < maxPages; i++) {
@@ -399,88 +358,6 @@ String readLargeStringFromNTAG(byte startPage, int maxPages = 3) {
   
   return trimTrailingSpaces(result);
 }
-
-// Function to read a block from mifare and return the data as a string
-String readBlock(byte block) {
-  // Authenticate the block (use key A)
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
-  if (status != MFRC522::STATUS_OK) {
-    Serial.print("Authentication failed: ");
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return "";
-  }
-
-  // Read the block
-  byte size = sizeof(buffer);
-  status = mfrc522.MIFARE_Read(block, buffer, &size);
-  if (status != MFRC522::STATUS_OK) {
-    Serial.print("Read failed: ");
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return "";
-  }
-
-  // Convert the buffer to a string
-  String data = "";
-  for (byte i = 0; i < 16; i++) {
-    if (buffer[i] != 0) {
-      data += (char)buffer[i];
-    }
-  }
-  return data;
-}
-
-/**
- * Write data to mifare styled memory
- */
-bool writeDataToBlock(int blockNum, byte blockData[]) {
-  // Authenticating the desired data block for write access using Key A
-  status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockNum, &key, &(mfrc522.uid));
-  if (status != MFRC522::STATUS_OK) {
-    Serial.print("Authentication failed for Write: ");
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return false;
-  }
-  
-  // Write data to the block
-  status = mfrc522.MIFARE_Write(blockNum, blockData, 16);
-  if (status != MFRC522::STATUS_OK) {
-    Serial.print("Writing to Block failed: ");
-    Serial.println(mfrc522.GetStatusCodeName(status));
-    return false;
-  } 
-  // Serial.println("Writing complete! ");
-  return true;
-}
-
-bool writeCardMemory(int blockNum, String data) {
-  if(is_ntag){
-    return writeLargeStringToNTAG(blockNum, data);
-  } else {
-    byte blockData[16]; // 16 bytes for the block
-    data.getBytes(blockData, 16); // Copy the string to the byte array
-    // Fill the rest of the block with empty data
-    for (int i = data.length(); i < 16; i++) {
-      blockData[i] = '\0';
-    }
-  
-    ignore_card_remove_event = true; // This prevents a tag lost & found spam after every operation
-    return writeDataToBlock(blockNum, blockData);
-  }
-}
-
-void detectCardType() {
-  MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-  if (piccType == MFRC522::PICC_TYPE_MIFARE_1K) {
-    activeMapping = mifareMapping;
-    is_ntag = false;
-  } else if (piccType == MFRC522::PICC_TYPE_MIFARE_UL) {
-    is_ntag = true;
-    activeMapping = ntagMapping;
-  } else {
-    Serial.println("Unknown card type.");
-  }
-}
-
 
 void loop() {
   if (Serial.available() > 0) {
@@ -496,16 +373,7 @@ void loop() {
         // We're not ignoring the "new card" event.
         Serial.print("Tag found: ");
         Serial.println(detected_tag);
-
-        detectCardType();
         
-        if (printMemory) {
-          if(is_ntag) {
-             readCardMemoryNTAG();
-          } else {
-            readCardMemoryMifare();
-          }
-        }
       } else {
         // If we are ignoring an event, we should start listening after ignoring it once.
         ignore_card_remove_event = false;
@@ -516,41 +384,41 @@ void loop() {
       // on the writing. We couldn't just use a normal retry, as it would try the same thing without allowing the states (or whatever the fuck is causing this)
       // to change. So future me (or idk, whoever reads this), learn from my folley. That retry stuff for the newCard present is there for a reason and it also affects the writing stuff. 
       if(data_to_write != "") {
-        writeCardMemory(activeMapping.sample_type, data_to_write);
+        writeLargeStringToNTAG(activeMapping.sample_type, data_to_write);
       } 
 
       if(sample_type_to_write != "") {
-        writeCardMemory(activeMapping.sample_type, sample_type_to_write);
+        writeLargeStringToNTAG(activeMapping.sample_type, sample_type_to_write);
         sample_type_to_write = "";
       } 
       if(primary_action_to_write != "") {
-        writeCardMemory(activeMapping.primary_action, primary_action_to_write);
+        writeLargeStringToNTAG(activeMapping.primary_action, primary_action_to_write);
         primary_action_to_write = "";
       }
       if(primary_target_to_write != "") {
-        writeCardMemory(activeMapping.primary_target, primary_target_to_write);
+        writeLargeStringToNTAG(activeMapping.primary_target, primary_target_to_write);
         primary_target_to_write = "";
       }
 
       if(secondary_action_to_write != "") {
-        writeCardMemory(activeMapping.secondary_action, secondary_action_to_write);
+        writeLargeStringToNTAG(activeMapping.secondary_action, secondary_action_to_write);
         secondary_action_to_write = "";
       }
       if(secondary_target_to_write != "") {
-        writeCardMemory(activeMapping.secondary_target, secondary_target_to_write);
+        writeLargeStringToNTAG(activeMapping.secondary_target, secondary_target_to_write);
         secondary_target_to_write = "";
       }
 
       if(depleted_to_write != "") {
-        writeCardMemory(activeMapping.depleted, depleted_to_write);
+        writeLargeStringToNTAG(activeMapping.depleted, depleted_to_write);
         depleted_to_write = "";
       }
 
       if(purity_to_write != "") {
         if(purity_to_write == "!") { // Special case, since we use empty strings as a way to check if we should do something, we use "!" as indication that stuff needs to be deleted
-          writeCardMemory(activeMapping.purity, "");
+          writeLargeStringToNTAG(activeMapping.purity, "");
         } else {
-          writeCardMemory(activeMapping.purity, purity_to_write);
+          writeLargeStringToNTAG(activeMapping.purity, purity_to_write);
         }
         purity_to_write = "";
       }
@@ -562,11 +430,8 @@ void loop() {
         if (blocks_to_read[i] == 0) break;
         int current_block = blocks_to_read[i];
         String result = "";
-        if(is_ntag){
-          result = readLargeStringFromNTAG(current_block);
-        } else {
-          result = readBlock(current_block);
-        }
+        result = readLargeStringFromNTAG(current_block);
+
     
         if (!firstBlock) {
           Serial.print(" ");  // Print space between blocks, but not before the first one
@@ -655,25 +520,21 @@ bool isValidTarget(const char* target) {
   return false;
 }
 
-void writeStringToEEPROM(int addrOffset, const String &strToWrite) {
-  byte len = strToWrite.length();
+// EEPROM Write (char array)
+void writeStringToEEPROM(int addrOffset, const char *strToWrite) {
+  byte len = strlen(strToWrite);
   EEPROM.write(addrOffset, len);
-  for (int i = 0; i < len; i++)
-  {
+  for (int i = 0; i < len; i++) {
     EEPROM.write(addrOffset + 1 + i, strToWrite[i]);
   }
-#if defined(ESP32) || defined(ESP8266)
-  EEPROM.commit();  // ESPs requires a commit, the nano does not.
-#endif
 }
 
-String readStringFromEEPROM(int addrOffset) {
-  int newStrLen = EEPROM.read(addrOffset);
-  char data[newStrLen + 1];
-  for (int i = 0; i < newStrLen; i++)
-  {
-    data[i] = EEPROM.read(addrOffset + 1 + i);
+// EEPROM Read (char array)
+void readStringFromEEPROM(int addrOffset, char* buffer, int maxLength) {
+  int len = EEPROM.read(addrOffset);
+  if (len > maxLength - 1) len = maxLength - 1;  // Prevent overflow
+  for (int i = 0; i < len; i++) {
+    buffer[i] = EEPROM.read(addrOffset + 1 + i);
   }
-  data[newStrLen] = '\0';
-  return String(data);
+  buffer[len] = '\0';  // Null-terminate the string
 }
