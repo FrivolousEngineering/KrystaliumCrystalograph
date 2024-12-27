@@ -2,8 +2,13 @@
 #include <MFRC522.h>
 #include <EEPROM.h>
 
-#define SS_PIN 5
-#define RST_PIN 0
+// NAno pinout?? 
+#define RST_PIN  9
+#define SS_PIN 10
+
+// ESP PINOUT
+//#define SS_PIN 5
+//#define RST_PIN 0
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Instance of the class
 MFRC522::MIFARE_Key key;
@@ -12,7 +17,7 @@ MFRC522::StatusCode status;
 int errorCount = 0;
 const int errorThreshold = 3;
 String detected_tag = "";
-bool printMemory = true;
+bool printMemory = false;
 bool printCardType = false;
 String data_to_write = "";
 byte blockData [16] = {};
@@ -47,28 +52,23 @@ String secondary_target_to_write = "";
 String depleted_to_write = ""; 
 String purity_to_write = "";
 
-const char* validPurities[] = {
+const char validPurities[][12] PROGMEM = {
   "POLLUTED", "TARNISHED", "DIRTY", "BLEMISHED",
   "IMPURE", "UNBLEMISHED", "LUCID", "STAINLESS",
   "PRISTINE", "IMMACULATE", "PERFECT"
 };
 
-const char* validActions[] = {
+const char validActions[][16] PROGMEM = {
   "EXPANDING", "CONTRACTING", "CONDUCTING", "INSULATING",
   "DETERIORATING", "CREATING", "DESTROYING", "INCREASING",
   "DECREASING", "ABSORBING", "RELEASING", "SOLIDIFYING",
   "LIGHTENING", "ENCUMBERING", "FORTIFYING", "HEATING", "COOLING"
 };
 
-const char* validTargets[] = {
+// Store valid targets in flash memory (PROGMEM)
+const char validTargets[][8] PROGMEM = {
   "FLESH", "MIND", "GAS", "SOLID", "LIQUID",
   "ENERGY", "LIGHT", "SOUND", "KRYSTAL", "PLANT"
-};
-
-const char* validVulgarities[] = {
-  "VULGAR", "LOW_MUNDANE", "HIGH_MUNDANE",
-  "LOW_SEMI_PRECIOUS", "HIGH_SEMI_PRECIOUS",
-  "PRECIOUS"
 };
 
 void setup() { 
@@ -169,7 +169,7 @@ bool writeLargeStringToNTAG(byte startPage, String data) {
     
     // Write to the current page
     if (!writeDataToPageNTAG(startPage + pageOffset, buffer)) {
-      Serial.println("Failed to write large string.");
+      Serial.println("Failed to write");
       return false;
     }
     
@@ -184,7 +184,7 @@ bool writeDataToPageNTAG(byte page, byte* data) {
   MFRC522::StatusCode status;
   status = mfrc522.MIFARE_Ultralight_Write(page, data, 4);
   if (status != MFRC522::STATUS_OK) {
-    Serial.print("Write failed at page ");
+    Serial.print("Write failed ");
     Serial.print(page);
     Serial.print(": ");
     Serial.println(mfrc522.GetStatusCodeName(status));
@@ -203,7 +203,7 @@ void readCardMemoryMifare() {
     // Authenticate before reading
     status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
-      Serial.print("Failed to authenticate block ");
+      Serial.print("Failed to auth block ");
       Serial.println(block);
       continue;
     }
@@ -288,7 +288,7 @@ void processCommand(String command) {
     }
   } else if (keyword == "WRITETYPE") {
     if(argument != "REFINED" && argument != "RAW"){
-      Serial.println("Unknown krystalium type. Only RAW and REFINED are supported");
+      Serial.println("Only RAW and REFINED");
       return;
     }
     sample_type_to_write = argument;  // Store data for writing
@@ -301,7 +301,8 @@ void processCommand(String command) {
   } else if (keyword == "WRITESAMPLE") {
     handleWriteSample(argument);
   } else {
-    Serial.println("Unknown command");
+    Serial.print("Unknown command: ");
+    Serial.println(keyword);
   }
 }
 
@@ -332,7 +333,7 @@ void handleWriteSample(String args) {
 
   // Validation
   if (sample_type != "RAW" && sample_type != "REFINED") {
-    Serial.println("Invalid sample type. Use RAW or REFINED.");
+    Serial.println("Invalid sample type.");
     return;
   }
   if (sample_type == "RAW") {
@@ -360,10 +361,10 @@ void handleWriteSample(String args) {
   // Specific validation for REFINED
   if (sample_type == "REFINED") {
     if (purity == "") {
-      Serial.println("Purity is required for REFINED samples.");
+      Serial.println("Purity not set.");
       return;
     }
-    if (!isValidPurity(purity)) {
+    if (!isValidPurity(purity.c_str())) {
       Serial.println("Invalid purity value.");
       return;
     }
@@ -398,7 +399,6 @@ String readLargeStringFromNTAG(byte startPage, int maxPages = 3) {
   
   return trimTrailingSpaces(result);
 }
-
 
 // Function to read a block from mifare and return the data as a string
 String readBlock(byte block) {
@@ -470,18 +470,10 @@ bool writeCardMemory(int blockNum, String data) {
 
 void detectCardType() {
   MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-  // Some debug prints
-  if(printCardType) { 
-    Serial.print(F("PICC type: "));
-    MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-    Serial.println(mfrc522.PICC_GetTypeName(piccType));
-  }
   if (piccType == MFRC522::PICC_TYPE_MIFARE_1K) {
-    Serial.println("MIFARE Classic detected.");
     activeMapping = mifareMapping;
     is_ntag = false;
   } else if (piccType == MFRC522::PICC_TYPE_MIFARE_UL) {
-    Serial.println("NTAG detected.");
     is_ntag = true;
     activeMapping = ntagMapping;
   } else {
@@ -621,8 +613,10 @@ String trimTrailingSpaces(String data) {
 }
 
 bool isValidAction(const String& action) {
-  for (const char* validAction : validActions) {
-    if (action.equals(validAction)) {
+  char buffer[16];
+  for (byte i = 0; i < sizeof(validActions) / sizeof(validActions[0]); i++) {
+    strcpy_P(buffer, (char*)pgm_read_word(&(validActions[i])));
+    if (action.equals(buffer)) {
       return true;
     }
   }
@@ -638,19 +632,24 @@ bool isValidTarget(const String& target) {
   return false;
 }
 
-bool isValidPurity(const String& purity) {
-  for (const char* validPurity : validPurities) {
-    if (purity.equals(validPurity)) {
-        return true;
+// Helper function to compare a string against PROGMEM arrays
+bool isValidPurity(const char* purity) {
+  char buffer[12];
+  for (byte i = 0; i < sizeof(validPurities) / sizeof(validPurities[0]); i++) {
+    strcpy_P(buffer, (char*)pgm_read_word(&(validPurities[i])));  // Copy from PROGMEM to RAM
+    if (strcasecmp(purity, buffer) == 0) {
+      return true;
     }
   }
   return false;
 }
 
-bool isValidVulgarity(const String& vulgarity) {
-  for (const char* validVulgarity : validVulgarities) {
-    if (vulgarity.equals(validVulgarity)) {
-        return true;
+bool isValidTarget(const char* target) {
+  char buffer[8];
+  for (byte i = 0; i < sizeof(validTargets) / sizeof(validTargets[0]); i++) {
+    strcpy_P(buffer, (char*)pgm_read_word(&(validTargets[i])));
+    if (strcasecmp(target, buffer) == 0) {
+      return true;
     }
   }
   return false;
