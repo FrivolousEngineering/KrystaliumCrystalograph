@@ -1,3 +1,5 @@
+from typing import List
+
 import serial
 import logging
 import threading
@@ -48,6 +50,25 @@ class RFIDController:
                 logging.error(f"Serial broke with exception of type {type(e)}: {e}")
                 time.sleep(0.1)  # Prevent error spam.
 
+    def _validateCardTraits(self, arguments: List[str]) -> bool:
+        logging.info(f"Checking reader response {arguments}")
+        if arguments[1] != "RAW" and arguments[1] != "REFINED":
+            logging.warning(f"INVALID TYPE: {arguments[1]}")
+            return False
+
+        # If we get "EMPTY" it means that they just got a weird tag with no traits
+        # on it. We need to fix that
+        if arguments[1] == "EMPTY":
+            logging.warning(f"EMPTY TAG")
+            return False
+
+        # We send traits back in all caps, which serves as a rudimentary check
+        # To see if the reading is correct
+        if any(arg != arg.upper() for arg in arguments[2:]):
+            logging.warning("Invalid response")
+            return False
+        return True
+
     def _handleSerialListen(self):
         logging.info("Starting serial listen thread")
         while self._serial is not None:
@@ -58,6 +79,9 @@ class RFIDController:
                 if line.startswith("Tag found:"):
                     response = line.replace("Tag found: ", "")
                     arguments = response.split(" ")
+                    if not self._validateCardTraits(arguments):
+                        # TODO: Send read all command!
+                        pass
                     card_id = arguments[0]
                     self._detected_card = card_id
                     self._on_card_detected_callback(card_id)
