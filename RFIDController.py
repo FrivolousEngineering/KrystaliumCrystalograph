@@ -8,6 +8,7 @@ class RFIDController:
     def __init__(self, on_card_detected_callback, on_card_lost_callback, baud_rate = 9600):
         # Handle listening to serial.
         self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
+        self._serial_send_thread = threading.Thread(target=self._handleSerialSend, daemon=True)
         self._baud_rate = baud_rate
         self._serial = None
         self._on_card_detected_callback = on_card_detected_callback
@@ -28,6 +29,25 @@ class RFIDController:
         if self._recreate_serial_timer:
             self._recreate_serial_timer.cancel()
 
+    def _recreateSerial(self):
+        logging.warning("Previously working serial has stopped working, try to re-create!")
+        self._serial = None
+        # Try to re-create it after a few seconds
+        self._recreate_serial_timer = threading.Timer(self._serial_recreate_time, self._createSerial)
+        self._recreate_serial_timer.start()
+
+    def _handleSerialSend(self):
+        logging.info("Starting serial send thread")
+
+        while self._serial is not None:
+            try:
+                pass
+            except serial.SerialException:
+                self._recreateSerial()
+            except Exception as e:
+                logging.error(f"Serial broke with exception of type {type(e)}: {e}")
+                time.sleep(0.1)  # Prevent error spam.
+
     def _handleSerialListen(self):
         logging.info("Starting serial listen thread")
         while self._serial is not None:
@@ -46,17 +66,14 @@ class RFIDController:
                     self._detected_card = None
                     self._on_card_lost_callback(card_id)
             except serial.SerialException:
-                logging.warning("Previously working serial has stopped working, try to re-create!")
-                self._serial = None
-                # Try to re-create it after a few seconds
-                self._recreate_serial_timer = threading.Timer(self._serial_recreate_time, self._createSerial)
-                self._recreate_serial_timer.start()
+                self._recreateSerial()
             except Exception as e:
                 logging.error(f"Serial broke with exception of type {type(e)}: {e}")
                 time.sleep(0.1)  # Prevent error spam.
 
     def _startSerialThread(self) -> None:
         self._serial_listen_thread.start()
+        self._serial_send_thread.start()
 
     def _createSerial(self) -> None:
         logging.info("Attempting to create serial")
@@ -65,6 +82,12 @@ class RFIDController:
             self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
         except RuntimeError:
             # If the thread hasn't started before it will cause a runtime. Ignore that.
+            pass
+
+        try:
+            self._serial_send_thread.join()
+            self._serial_send_thread = threading.Thread(target=self._handleSerialSend(), daemon=True)
+        except RuntimeError:
             pass
 
         for i in range(0, 10):
