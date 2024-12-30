@@ -13,8 +13,9 @@ class RFIDController:
                  traits_detected_callback: Callable[[List[str]], None],
                  baud_rate = 9600):
         # Handle listening to serial.
-        self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
         self._serial_send_thread = threading.Thread(target=self._handleSerialSend, daemon=True)
+        self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
+
         self._baud_rate = baud_rate
         self._serial = None
         self._on_card_detected_callback = on_card_detected_callback
@@ -48,7 +49,8 @@ class RFIDController:
 
         while self._serial is not None:
             try:
-                pass
+                # It no like spinlocking :(
+                time.sleep(0.1)
             except serial.SerialException:
                 self._recreateSerial()
             except Exception as e:
