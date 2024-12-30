@@ -467,7 +467,7 @@ void loop() {
       readBlocksToBuffer(resultBuffer, sizeof(resultBuffer));
       trim(resultBuffer); 
       if (strlen(resultBuffer) > 0) {
-        
+        Serial.print("Traits: ");
         Serial.println(resultBuffer);
         memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
       }
