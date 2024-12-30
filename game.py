@@ -118,6 +118,9 @@ class PygameWrapper:
 
     def _onCardDetected(self, rfid_id: str) -> None:
         logging.info(f"Card detected {rfid_id}")
+
+        ## Disable the HTTP stuff for now as we're reading from tags themselves now
+        return
         try:
             r = requests.get(f"{self._base_server_url}/samples/{rfid_id}")
         except requests.exceptions.ConnectionError:
