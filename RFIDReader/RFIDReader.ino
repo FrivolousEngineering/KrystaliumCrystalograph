@@ -359,6 +359,33 @@ String readLargeStringFromNTAG(byte startPage, int maxPages = 4) {
   return trimTrailingSpaces(result);
 }
 
+void readBlocksToBuffer(char* buffer, size_t bufferSize) {
+  buffer[0] = '\0';  // Start with an empty buffer
+  bool firstBlock = true;
+
+  for (int i = 0; i < sizeof(blocks_to_read) / sizeof(blocks_to_read[0]); i++) {
+    if (blocks_to_read[i] == 0) break;
+    int current_block = blocks_to_read[i];
+    
+    // Read block into a temporary buffer
+    char tempBuffer[48];  // Adjust based on typical block size
+    memset(tempBuffer, 0, sizeof(tempBuffer));
+    String result = readLargeStringFromNTAG(current_block);  // Reading block as String
+
+    // Copy the result into tempBuffer
+    result.toCharArray(tempBuffer, sizeof(tempBuffer));
+
+    // Concatenate to the main buffer
+    if (!firstBlock) {
+      strncat(buffer, " ", bufferSize - strlen(buffer) - 1);  // Add space separator
+    }
+
+    strncat(buffer, tempBuffer, bufferSize - strlen(buffer) - 1);  // Append block data
+
+    firstBlock = false;
+  }
+}
+
 void loop() {
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
@@ -372,8 +399,21 @@ void loop() {
       if(!ignore_card_remove_event) {
         // We're not ignoring the "new card" event.
         Serial.print("Tag found: ");
-        Serial.println(detected_tag);
-        
+        Serial.print(detected_tag);
+        Serial.print(" ");
+        // Fake a read all properties command so that we can get print it 
+        handleReadCommand("ALL");
+        char resultBuffer[256];
+        readBlocksToBuffer(resultBuffer, sizeof(resultBuffer));
+        // If there is nothing in memory we will get a bunch of spaces.
+        // Trim them so we can check if it's empty or not.
+        trim(resultBuffer); 
+        if (strlen(resultBuffer) > 0) {
+          Serial.println(resultBuffer);
+          memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
+        } else {
+          Serial.println("EMPTY");
+        }
       } else {
         // If we are ignoring an event, we should start listening after ignoring it once.
         ignore_card_remove_event = false;
@@ -422,31 +462,14 @@ void loop() {
         }
         purity_to_write = "";
       }
+      char resultBuffer[256];
 
-      bool dataRead = false;
-      bool firstBlock = true;
-
-      for (int i = 0; i < sizeof(blocks_to_read) / sizeof(blocks_to_read[0]); i++) {
-        if (blocks_to_read[i] == 0) break;
-        int current_block = blocks_to_read[i];
-        String result = "";
-        result = readLargeStringFromNTAG(current_block);
-
-    
-        if (!firstBlock) {
-          Serial.print(" ");  // Print space between blocks, but not before the first one
-        }
+      readBlocksToBuffer(resultBuffer, sizeof(resultBuffer));
+      trim(resultBuffer); 
+      if (strlen(resultBuffer) > 0) {
         
-        Serial.print(result);
-        dataRead = true;
-        firstBlock = false;  // After the first block, add spaces for subsequent blocks
-    
-        ignore_card_remove_event = true;
-      }
-      
-      if (dataRead) {
+        Serial.println(resultBuffer);
         memset(blocks_to_read, 0, sizeof(blocks_to_read)); // Reset blocks_to_read after reading
-        Serial.println();
       }
     }
     errorCount = 0;
