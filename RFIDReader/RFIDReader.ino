@@ -73,7 +73,7 @@ const char validTargets[][8] PROGMEM = {
 };
 
 void setup() { 
-  Serial.begin(9600);
+  Serial.begin(115200);
   SPI.begin(); // Init SPI bus
   mfrc522.PCD_Init(); // Init MFRC522 
   Serial.println("Reader has booted");

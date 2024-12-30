@@ -11,7 +11,7 @@ class RFIDController:
                  on_card_detected_callback: Callable[[str], None],
                  on_card_lost_callback: Callable[[str], None],
                  traits_detected_callback: Callable[[List[str]], None],
-                 baud_rate = 9600):
+                 baud_rate = 115200):
         # Handle listening to serial.
         self._serial_send_thread = threading.Thread(target=self._handleSerialSend, daemon=True)
         self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
