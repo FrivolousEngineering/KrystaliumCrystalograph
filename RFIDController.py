@@ -7,7 +7,7 @@ import time
 class RFIDController:
     def __init__(self, on_card_detected_callback, on_card_lost_callback, baud_rate = 9600):
         # Handle listening to serial.
-        self._serial_listen_thread = threading.Thread(target=self._handleSerial, daemon=True)
+        self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
         self._baud_rate = baud_rate
         self._serial = None
         self._on_card_detected_callback = on_card_detected_callback
@@ -28,8 +28,8 @@ class RFIDController:
         if self._recreate_serial_timer:
             self._recreate_serial_timer.cancel()
 
-    def _handleSerial(self):
-        logging.info("Starting serial thread")
+    def _handleSerialListen(self):
+        logging.info("Starting serial listen thread")
         while self._serial is not None:
             try:
                 line = self._serial.readline()
@@ -62,7 +62,7 @@ class RFIDController:
         logging.info("Attempting to create serial")
         try:
             self._serial_listen_thread.join()  # Ensure that previous thread has closed
-            self._serial_listen_thread = threading.Thread(target=self._handleSerial, daemon=True)
+            self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
         except RuntimeError:
             # If the thread hasn't started before it will cause a runtime. Ignore that.
             pass
