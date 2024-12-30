@@ -36,7 +36,9 @@ class RFIDController:
                 line = line.rstrip()  # Strip newlines
                 line = line.decode("utf-8")
                 if line.startswith("Tag found:"):
-                    card_id = line.replace("Tag found: ", "")
+                    response = line.replace("Tag found: ", "")
+                    arguments = response.split(" ")
+                    card_id = arguments[0]
                     self._detected_card = card_id
                     self._on_card_detected_callback(card_id)
                 elif line.startswith("Tag lost:"):
