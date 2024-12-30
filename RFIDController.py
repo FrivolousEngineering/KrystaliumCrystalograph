@@ -24,6 +24,7 @@ class RFIDController:
         self._detected_card = None
         self._recreate_serial_timer = None
         self._serial_recreate_time = 5
+        self._request_trait_info = True # Should we re-request trait info?
 
     def getDetectedCard(self):
         return self._detected_card
@@ -44,11 +45,23 @@ class RFIDController:
         self._recreate_serial_timer = threading.Timer(self._serial_recreate_time, self._createSerial)
         self._recreate_serial_timer.start()
 
+    def _sendCommand(self, command=""):
+        # TODO: add command validity checking.
+        if self._serial:
+            self._serial.write(b"\n")
+            command += "\n"
+            self._serial.write(command.encode('utf-8'))
+        else:
+            logging.error("Unable to write command %s without serial connection" % command)
+
     def _handleSerialSend(self):
         logging.info("Starting serial send thread")
 
         while self._serial is not None:
             try:
+                if self._request_trait_info:
+                    self._sendCommand("READ ALL")
+                    self._request_trait_info = False
                 # It no like spinlocking :(
                 time.sleep(0.1)
             except serial.SerialException:
@@ -59,19 +72,19 @@ class RFIDController:
 
     def _validateCardTraits(self, arguments: List[str]) -> bool:
         logging.info(f"Checking reader response {arguments}")
-        if arguments[1] != "RAW" and arguments[1] != "REFINED":
+        if arguments[0] != "RAW" and arguments[0] != "REFINED":
             logging.warning(f"INVALID TYPE: {arguments[1]}")
             return False
 
         # If we get "EMPTY" it means that they just got a weird tag with no traits
         # on it. We need to fix that
-        if arguments[1] == "EMPTY":
+        if arguments[0] == "EMPTY":
             logging.warning(f"EMPTY TAG")
             return False
 
         # We send traits back in all caps, which serves as a rudimentary check
         # To see if the reading is correct
-        if any(arg != arg.upper() for arg in arguments[2:]):
+        if any(arg != arg.upper() for arg in arguments[1:]):
             logging.warning("Invalid response")
             return False
         return True
@@ -86,20 +99,26 @@ class RFIDController:
                 if line.startswith("Tag found:"):
                     response = line.replace("Tag found: ", "")
                     arguments = response.split(" ")
-
-
                     card_id = arguments[0]
                     self._detected_card = card_id
                     self._on_card_detected_callback(card_id)
-                    if not self._validateCardTraits(arguments):
+                    if not self._validateCardTraits(arguments[1:]):
                         # TODO: Send read all command!
-                        pass
+                        self._request_trait_info = True
                     else:
                         self._traits_detected_callback(arguments[1:])
                 elif line.startswith("Tag lost:"):
                     card_id = line.replace("Tag lost: ", "")
                     self._detected_card = None
                     self._on_card_lost_callback(card_id)
+                elif line.startswith("Traits: "):
+                    response = line.replace("Traits: ", "")
+                    arguments = response.split(" ")
+                    if self._validateCardTraits(arguments):
+                        self._traits_detected_callback(arguments)
+                    else:
+                        logging.warning("READ ALL FAILED :(")
+
             except serial.SerialException:
                 self._recreateSerial()
             except Exception as e:
