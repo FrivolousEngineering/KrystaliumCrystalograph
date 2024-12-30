@@ -190,18 +190,24 @@ class PygameWrapper:
                         self._running = False
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                    # Toggle fullscreen (DEBUG)
                     pygame.display.toggle_fullscreen()
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_x:
+                    # Force fadein (DEBUG)
                     self._fader.fadeIn()
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+                    # Force fadeout (DEBUG)
                     self._fader.fadeOut()
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
+                    # Shake the screen (DEBUG)
                     self._screen_shake += 40
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+                    # Show random (DEBUG)
                     self._crystalograph.clearLinesToDraw()
                     addRandomLinesToCrystalograph(self._crystalograph)
                     self._crystalograph.setup()
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_a:
+                    # Cycle to next action (DEBUG)
                     self._crystalograph.clearLinesToDraw()
                     self._current_action_index += 1
                     if self._current_action_index > 16:
@@ -211,6 +217,7 @@ class PygameWrapper:
                     self._crystalograph.setup()
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_t:
+                    # Cycle to next target (DEBUG)
                     self._crystalograph.clearLinesToDraw()
                     self._current_target_index += 1
                     if self._current_target_index > 9:
@@ -220,6 +227,7 @@ class PygameWrapper:
                     self._crystalograph.setup()
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                    # Save current image shown on screen (DEBUG)
                     import cv2
 
                     cv2.imwrite(
