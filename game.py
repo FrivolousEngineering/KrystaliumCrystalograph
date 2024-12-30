@@ -1,6 +1,8 @@
 import argparse
 import contextlib
 import random
+from typing import List
+
 import requests
 import logging
 import sys
@@ -57,7 +59,7 @@ class PygameWrapper:
         self._running = True
         self._crystalograph = Crystalograph.Crystalograph()
         self._glitch_handler = GlitchHandler()
-        self._rfid_controller = RFIDController(self._onCardDetected, self._onCardLost)
+        self._rfid_controller = RFIDController(self._onCardDetected, self._onCardLost, self._onTraitsDetected)
         self._rfid_controller.start()
 
         self._crystalograph.createEmptyImage((self._screen_width, self._screen_height))
@@ -88,14 +90,33 @@ class PygameWrapper:
         handler.setFormatter(formatter)
         root.addHandler(handler)
 
-    def _onCardLost(self, rfid_id):
+    def _onTraitsDetected(self, traits: List[str]) -> None:
+        logging.info(f"Traits detected: {traits}")
+        self._crystalograph.clearLinesToDraw()
+
+        if traits[0] == "RAW":
+            self._new_sample_to_draw = {"positive_action": traits[1].lower(),
+                                        "positive_target": traits[2].lower(),
+                                        "negative_action": traits[3].lower(),
+                                        "negative_target": traits[4].lower(),
+                                        "vulgarity": "HACK",  # Sorry. But I'm faking the old API
+                                        "depleted": traits[5] != "ACTIVE"
+                                        }
+        else:
+            self._new_sample_to_draw = {"primary_action": traits[1].lower(),
+                                        "primary_target": traits[2].lower(),
+                                        "secondary_action": traits[3].lower(),
+                                        "secondary_target": traits[4].lower(),
+                                        "depleted": traits[6] != "ACTIVE"
+                                        }
+
+    def _onCardLost(self, rfid_id: str) -> None:
         logging.info(f"Card lost {rfid_id}")
 
-        # We only fade out, as we don't want the pattern to disapear right away
-
+        # We only fade out, as we don't want the pattern to disappear right away
         self._fader.fadeOut()
 
-    def _onCardDetected(self, rfid_id):
+    def _onCardDetected(self, rfid_id: str) -> None:
         logging.info(f"Card detected {rfid_id}")
         try:
             r = requests.get(f"{self._base_server_url}/samples/{rfid_id}")

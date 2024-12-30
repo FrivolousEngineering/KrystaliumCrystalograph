@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable
 
 import serial
 import logging
@@ -7,7 +7,11 @@ import time
 
 
 class RFIDController:
-    def __init__(self, on_card_detected_callback, on_card_lost_callback, baud_rate = 9600):
+    def __init__(self,
+                 on_card_detected_callback: Callable[[str], None],
+                 on_card_lost_callback: Callable[[str], None],
+                 traits_detected_callback: Callable[[List[str]], None],
+                 baud_rate = 9600):
         # Handle listening to serial.
         self._serial_listen_thread = threading.Thread(target=self._handleSerialListen, daemon=True)
         self._serial_send_thread = threading.Thread(target=self._handleSerialSend, daemon=True)
@@ -15,6 +19,7 @@ class RFIDController:
         self._serial = None
         self._on_card_detected_callback = on_card_detected_callback
         self._on_card_lost_callback = on_card_lost_callback
+        self._traits_detected_callback = traits_detected_callback
         self._detected_card = None
         self._recreate_serial_timer = None
         self._serial_recreate_time = 5
@@ -79,12 +84,16 @@ class RFIDController:
                 if line.startswith("Tag found:"):
                     response = line.replace("Tag found: ", "")
                     arguments = response.split(" ")
-                    if not self._validateCardTraits(arguments):
-                        # TODO: Send read all command!
-                        pass
+
+
                     card_id = arguments[0]
                     self._detected_card = card_id
                     self._on_card_detected_callback(card_id)
+                    if not self._validateCardTraits(arguments):
+                        # TODO: Send read all command!
+                        pass
+                    else:
+                        self._traits_detected_callback(arguments[1:])
                 elif line.startswith("Tag lost:"):
                     card_id = line.replace("Tag lost: ", "")
                     self._detected_card = None
