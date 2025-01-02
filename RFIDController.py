@@ -24,7 +24,7 @@ class RFIDController:
         self._detected_card = None
         self._recreate_serial_timer = None
         self._serial_recreate_time = 5
-        self._request_trait_info = True # Should we re-request trait info?
+        self._request_trait_info = False  # Should we re-request trait info?
 
     def getDetectedCard(self):
         return self._detected_card
