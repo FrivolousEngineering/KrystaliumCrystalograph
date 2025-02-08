@@ -76,8 +76,9 @@ void setup() {
   Serial.begin(115200);
   SPI.begin(); // Init SPI bus
   mfrc522.PCD_Init(); // Init MFRC522 
-  Serial.println("Reader has booted");
-
+  
+  Serial.print("Reader has booted. Chip state: ");
+  Serial.println(mfrc522.PCD_PerformSelfTest()); // Prints 1 if the reader was correctly identified. If it's wired/soldered incorrectly or some kind of fucked counterfeit it will print 0
   // Initialize default key
   for (byte i = 0; i < 6; i++) {
     key.keyByte[i] = 0xFF;
